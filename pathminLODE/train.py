@@ -21,33 +21,75 @@ import jax.numpy as jnp
 import jax.random as jr
 import optax
 
-# import the lode 
-from lode import LatentODE 
+# import the lode
+from lode import LatentODE
 
-# optionally move to float64 precision 
-if precision64:
-    from jax import config
-    config.update("jax_enable_x64", True)
+# add command line arguments
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--dims", type=int, default=1, help="size of the data")
+parser.add_argument("--hidden", type=int, default=20, help="size of the hidden layers")
+parser.add_argument("--latent", type=int, default=20, help="size of the latent space")
+parser.add_argument("--width", type=int, default=20, help="width of the neural ODE")
+parser.add_argument("--depth", type=int, default=1, help="depth of the neural ODE")
+parser.add_argument("--alpha", type=float, default=0.0, help="regularization parameter")
+parser.add_argument(
+    "--lossType", type=str, default="distance", help="type of loss function"
+)
+parser.add_argument("--batch_size", type=int, default=20, help="size of the batches")
+parser.add_argument("--lr", type=float, default=1e-3, help="learning rate")
+parser.add_argument("--steps", type=int, default=1000, help="number of training steps")
+parser.add_argument("--save_every", type=int, default=500, help="save every n steps")
+parser.add_argument("--seed", type=int, default=1992, help="random seed")
+parser.add_argument(
+    "--precision64", type=bool, default=True, help="use float64 precision"
+)
+
+
+# getting the data
+def get_data(path_w, path_t):
+    w1 = np.load(path_w)
+    times = np.load(path_t)
+    times = jnp.array(times)
+    w1 = jnp.array(w1)
+    return times, w1
+
+
+# make an iterator for the dataset
+def dataloader(arrays, batch_size, *, key):
+    dataset_size = arrays[0].shape[0]
+    assert all(array.shape[0] == dataset_size for array in arrays)
+    indices = jnp.arange(dataset_size)
+    while True:
+        perm = jr.permutation(key, indices)
+        (key,) = jr.split(key, 1)
+        start = 0
+        end = batch_size
+        while start < dataset_size:
+            batch_perm = perm[start:end]
+            yield tuple(array[batch_perm] for array in arrays)
+            start = end
+            end = start + batch_size
 
 
 def main(
-        model_size=1,
-        hidden_size=20,
-        latent_size=20,
-        width_size=20,
-        depth=1,
-        alpha=0.0,
-        lossType='distance',
-        batch_size=20,
-        learning_rate=1e-3,
-        steps=1000,
-        save_every=500,
-        seed=1992
-        ):
-    
+    model_size=1,
+    hidden_size=10,
+    latent_size=10,
+    width_size=10,
+    depth=1,
+    alpha=1,
+    lossType="distance",
+    batch_size=1,
+    learning_rate=0.1,
+    steps=1000,
+    save_every=500,
+    seed=1992,
+):
 
-    # instantiate the model 
-    model = LatentODE(
+    # instantiate the model
+    lode_model = LatentODE(
         data_size=model_size,
         hidden_size=hidden_size,
         latent_size=latent_size,
@@ -57,3 +99,162 @@ def main(
         alpha=alpha,
         lossType=lossType,
     )
+
+    @eqx.filter_value_and_grad
+    def loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_):
+        batch_size, _ = ts_i.shape
+        key_i = jr.split(key_i, batch_size)
+        latent_spread = jnp.repeat(latent_spread, batch_size).reshape(
+            batch_size, latent_spread.shape[-1]
+        )
+        loss = jax.vmap(model.train)(
+            ts_i, ys_i, latent_spread, ys_=ys_i_, ts_=ts_i_, key=key_i
+        )
+        return jnp.mean(loss)
+
+    @eqx.filter_jit
+    def make_step(model, opt_state, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_):
+        value, grads = loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_)
+        key_i = jr.split(key_i, 1)[0]
+        updates, opt_state = optim.update(grads, opt_state)
+        model = eqx.apply_updates(model, updates)
+        return value, model, opt_state, key_i
+
+    schedule = optax.schedules.cosine_onecycle_schedule(
+        transition_steps=steps,
+        peak_value=learning_rate,
+        pct_start=0.3,
+        div_factor=25.0,
+        final_div_factor=1000.0,
+    )
+    optim = optax.adam(learning_rate=schedule)
+    opt_state = optim.init(eqx.filter(model, eqx.is_inexact_array))
+
+    for step, (ts_i, ys_i) in zip(
+        range(steps), dataloader((ts, ys), batch_size, key=loader_key)
+    ):
+        if train:
+
+            start = time.time()
+
+            # choose a random integer between 1 and 100
+            key_e = jr.PRNGKey(step)  # always same runs will be long
+            key_start, key_end, key_points = jr.split(key_e, 3)
+            max_path = 100
+            # n_path = jr.choice(key_points, path_v, shape=(1,), replace=True)[0]
+            n_path = jr.randint(key_start, shape=(), minval=5, maxval=max_path)
+            start_idx = jr.randint(
+                key_end, shape=(), minval=0, maxval=ys.shape[1] - n_path - 1
+            )
+            end_idx = start_idx + n_path
+            # take a full path every 100 steps
+            if step % 5 == 0:
+                start_idx = 0
+                end_idx = -1
+            # convert start and end index to be used as slicing indices
+            ts_i_ = ts_i[:, start_idx:end_idx]
+            ys_i_ = ys_i[:, start_idx:end_idx, :]
+
+            # get the standard deviation to ensure good spread
+            batch_size_i, _ = ts_i.shape
+            spread_key = jr.split(train_key, batch_size_i)
+            (
+                latents,
+                _,
+                _,
+            ) = jax.vmap(
+                model._latent
+            )(ts_i, ys_i, spread_key)
+            latent_spread = jnp.std(latents, axis=0)
+
+            value, model, opt_state, train_key = make_step(
+                model,
+                opt_state,
+                ts_i,
+                ys_i,
+                train_key,
+                latent_spread,
+                ys_i_,
+                ts_i_,
+            )
+            end = time.time()
+            print(f"Step: {step}, Loss: {value}, Computation time: {end - start}")
+            loss_vector.append(value)
+
+        # load the model instead here
+        else:
+            modelName = "saved_models/" + MODEL_NAME
+            model = eqx.tree_deserialise_leaves(modelName, model)
+
+        # track the path lengths and errors
+        if step % error_every == 0:
+            # path length calculation do this for the paths used in training
+            key_path = jr.split(train_key, 1)[0]
+            key_path = jr.split(key_path, ts_i.shape[0])
+            path_len = jax.vmap(model.pathLength)(ts=ts_i, ys=ys_i, key=key_path)
+            path_vector.append(jnp.mean(path_len))
+
+        # save the model
+        SAVE_DIR = "saved_models"
+        save_suffix = (
+            "hsz_"
+            + str(hidden_size)
+            + "_lsz_"
+            + str(latent_size)
+            + "_w_"
+            + str(width_size)
+            + "_d_"
+            + str(depth)
+            + "_lossType_"
+            + lossType
+        )
+        if not os.path.exists(SAVE_DIR):
+            os.makedirs(SAVE_DIR)
+        if (step % save_every) == 0 or step == steps - 1:
+            fn = (
+                SAVE_DIR + "/" + save_name + save_suffix + "_step_" + str(step) + ".eqx"
+            )
+            eqx.tree_serialise_leaves(fn, model)
+            print(f"latent spread: {latent_spread/ np.max(latent_spread)}")
+
+
+# code entry
+if __name__ == "__main__":
+
+    # for some clarity rename the args here
+    args = parser.parse_args()
+    model_size = args.dims
+    hidden_size = args.hidden
+    latent_size = args.latent
+    width_size = args.width
+    depth = args.depth
+    alpha = args.alpha
+    lossType = args.lossType
+    batch_size = args.batch_size
+    learning_rate = args.lr
+    steps = args.steps
+    save_every = args.save_every
+    seed = args.seed
+
+    # optionally move to float64 precision
+    if args.precision64:
+        from jax import config
+
+        config.update("jax_enable_x64", True)
+
+    main(
+        model_size=model_size,
+        hidden_size=hidden_size,
+        latent_size=latent_size,
+        width_size=width_size,
+        depth=depth,
+        alpha=alpha,
+        lossType=lossType,
+        batch_size=batch_size,
+        learning_rate=learning_rate,
+        steps=steps,
+        save_every=save_every,
+        seed=seed,
+    )
+
+    print("training successfully completed!")
