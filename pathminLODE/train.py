@@ -74,18 +74,21 @@ def dataloader(arrays, batch_size, *, key):
 
 
 def main(
-    model_size=1,
-    hidden_size=10,
-    latent_size=10,
-    width_size=10,
-    depth=1,
-    alpha=1,
-    lossType="distance",
-    batch_size=1,
-    learning_rate=0.1,
-    steps=1000,
-    save_every=500,
-    seed=1992,
+    model_size=1,        # dimensions of the data
+    hidden_size=10,      # size of the hidden layers
+    latent_size=10,      # size of the latent space
+    width_size=10,       # width of the MLP
+    depth=1,             # depth of the MLP
+    alpha=1,             # strength of pathmin regularizer
+    lossType="distance", # type of loss function
+    batch_size=1,        # size of the batches
+    learning_rate=0.1,   # initial learning rate
+    steps=1000,          # number of training steps
+    save_every=500,      # save every n steps
+    seed=1992,           # random seed for reproducibility
+    full_every=1,        # take a full path every n steps
+    min_path=5,          # minimum path length to sample
+    max_path=20,         # maximum path length to sample
 ):
 
     # instantiate the model
@@ -137,23 +140,27 @@ def main(
 
             start = time.time()
 
-            # choose a random integer between 1 and 100
-            key_e = jr.PRNGKey(step)  # always same runs will be long
-            key_start, key_end, key_points = jr.split(key_e, 3)
-            max_path = 100
-            # n_path = jr.choice(key_points, path_v, shape=(1,), replace=True)[0]
-            n_path = jr.randint(key_start, shape=(), minval=5, maxval=max_path)
-            start_idx = jr.randint(
-                key_end, shape=(), minval=0, maxval=ys.shape[1] - n_path - 1
-            )
-            end_idx = start_idx + n_path
-            # take a full path every 100 steps
-            if step % 5 == 0:
-                start_idx = 0
-                end_idx = -1
-            # convert start and end index to be used as slicing indices
-            ts_i_ = ts_i[:, start_idx:end_idx]
-            ys_i_ = ys_i[:, start_idx:end_idx, :]
+            if full_every > 1:
+                """ 
+                we randomly sample points of various length to 
+                improve inference performance on sparse data
+                """
+
+                # choose a random integer between 1 and 100
+                key_e = jr.PRNGKey(step)  # always same runs will be long
+                key_start, key_end, key_points = jr.split(key_e, model_size)
+                n_path = jr.randint(key_start, shape=(), minval=min_path, maxval=max_path)
+                start_idx = jr.randint(
+                    key_end, shape=(), minval=0, maxval=ys.shape[1] - n_path - 1
+                )
+                end_idx = start_idx + n_path
+                # take a full path every 100 steps
+                if step % full_every == 0:
+                    start_idx = 0
+                    end_idx = -1
+                # convert start and end index to be used as slicing indices
+                ts_i_ = ts_i[:, start_idx:end_idx]
+                ys_i_ = ys_i[:, start_idx:end_idx, :]
 
             # get the standard deviation to ensure good spread
             batch_size_i, _ = ts_i.shape
