@@ -25,7 +25,7 @@ import optax
 from lode import LatentODE 
 
 # optionally move to float64 precision 
-if 64bit:
+if precision64:
     from jax import config
     config.update("jax_enable_x64", True)
 
