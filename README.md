@@ -9,6 +9,8 @@ The latent ODE approach implicitly relies on encoders to identify unknown system
 parameters and initial conditions, whereas the evaluation times are known and directly
 provided to the ODE solver. This dichotomy can be exploited by encouraging timeindependent latent representations. By replacing the common variational penalty in latent space with an ℓ2 penalty on the path length of each system, the models
 learn data representations that can easily be distinguished from those of systems with different configurations.
+
+The general pipeline is below, noting we aim to minimize the distance of the trajectories z_i in latent space.
 <img src="/images/pipeline.png" height="300">
 
 ### Examples
