@@ -6,10 +6,10 @@
 <img src="/images/pipeline.png" height="300">
 
 ### Examples
-<img src="/images/harmonic.png" height="300">
+<img src="/images/harmonic.png" height="400">
 
 
-<img src="/images/litka-volterra.png" height="300">
+<img src="/images/lotka-volterra.png" height="300">
 
 ## Usage 
 To be complete
