@@ -48,7 +48,7 @@ class Func(eqx.Module):
         return self.scale * self.mlp(y)
 
 
-# The LatentODE model based on a Variational Autoencoder
+# The LatentODE model
 class LatentODE(eqx.Module):
     func: Func
     rnn_cell: eqx.nn.GRUCell
@@ -120,11 +120,10 @@ class LatentODE(eqx.Module):
 
     # Decoder of the VAE
     def _sample(self, ts, latent):
-        dt0 = 1  # 0.2  # selected as a reasonable choice for this problem
+        dt0 = 0.1
         y0 = self.latent_to_hidden(latent)
         solver = (
-            # diffrax.Tsit5()
-            diffrax.Bosh3()
+            diffrax.Tsit5()
         )  # see: https://docs.kidger.site/diffrax/api/solvers/ode_solvers/
         adjoint = (
             diffrax.RecursiveCheckpointAdjoint()
