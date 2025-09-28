@@ -96,7 +96,6 @@ class LatentODE(eqx.Module):
         )
         self.func = Func(scale, mlp)
         self.rnn_cell = eqx.nn.GRUCell(data_size + 1, hidden_size, key=gkey)
-        # self.rnn_cell = eqx.nn.GRUCell(data_size, hidden_size, key=gkey)
         self.hidden_to_latent = eqx.nn.Linear(hidden_size, 2 * latent_size, key=hlkey)
         self.latent_to_hidden = eqx.nn.MLP(
             latent_size, hidden_size, width_size=width_size, depth=depth, key=lhkey
@@ -108,9 +107,8 @@ class LatentODE(eqx.Module):
         self.alpha = alpha
         self.lossType = lossType
 
-    # Encoder of the VAE
+    # Encoder 
     def _latent(self, ts, ys, key):
-        # ys_ = ys[:,[0, 2]]
         ys_ = ys
         data = jnp.concatenate([ts[:, None], ys_], axis=1)
         hidden = jnp.zeros((self.hidden_size,))
@@ -120,7 +118,7 @@ class LatentODE(eqx.Module):
         latent, std = context[: self.latent_size], context[self.latent_size :]
         return latent, std
 
-    # Decoder of the VAE
+    # Decoder 
     def _sample(self, ts, latent):
         dt0 = 0.1
         y0 = self.latent_to_hidden(latent)
@@ -223,7 +221,7 @@ class LatentODE(eqx.Module):
         return self._sample(ts, latent)
 
     def _sampleLatent(self, ts, latent):
-        dt0 = 0.2  # selected as a reasonable choice for this problem
+        dt0 = 0.1  # selected as a reasonable choice for this problem
         y0 = self.latent_to_hidden(latent)
         sol = diffrax.diffeqsolve(
             diffrax.ODETerm(self.func),
