@@ -33,9 +33,8 @@ This work introduces a **path-length regularization** strategy: instead of the s
 - **Simulation-Based Inference**: Latents serve as effective summary statistics for parameter inference using normalizing flows.  
 - **Configurable Training**: Easily adjust model, solver, and training hyperparameters via configuration files.  
 
----
-
 <img src="/images/pipeline.png" height="300">
+---
 
 ## Installation
 
@@ -61,11 +60,15 @@ To be complete
 ### Citation
 If you make use of this code please cite:
 ```bibtex
-@article{sampson2024pathmin,
-  title={Path-Minimizing Latent ODEs for Improved Extrapolation and Inference},
-  author={Sampson, Matt L. and Melchior, Peter},
-  journal={arXiv preprint arXiv:2410.08923},
-  year={2024}
+@article{sampson2025path,
+  title={Path-minimizing latent ODEs for improved extrapolation and inference},
+  author={Sampson, Matt L and Melchior, Peter},
+  journal={Machine Learning: Science and Technology},
+  volume={6},
+  number={2},
+  pages={025047},
+  year={2025},
+  publisher={IOP Publishing}
 }
 ```
 
