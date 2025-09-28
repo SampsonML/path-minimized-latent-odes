@@ -49,8 +49,11 @@ Clone the repository and install dependencies:
 ```shell
 git clone https://github.com/SampsonML/path-minimized-latent-odes.git
 cd path-minimized-latent-odes
-pip install -r requirements.txt ***(to be comleted)
+pip install -r requirements.txt 
 ```
+> **Note:** This model requires JAX with CUDA support if you want GPU acceleration.
+> To do this please install visit here (https://docs.jax.dev/en/latest/installation.html) for the latest methods for GPU compatible JAX installations
+
 
 ## Usage 
 To be complete
