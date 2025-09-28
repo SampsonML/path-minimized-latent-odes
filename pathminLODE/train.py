@@ -168,7 +168,6 @@ def main(
             (
                 latents,
                 _,
-                _,
             ) = jax.vmap(
                 model._latent
             )(ts_i, ys_i, spread_key)
@@ -193,14 +192,6 @@ def main(
             modelName = "saved_models/" + MODEL_NAME
             model = eqx.tree_deserialise_leaves(modelName, model)
 
-        # track the path lengths and errors
-        if step % error_every == 0:
-            # path length calculation do this for the paths used in training
-            key_path = jr.split(train_key, 1)[0]
-            key_path = jr.split(key_path, ts_i.shape[0])
-            path_len = jax.vmap(model.pathLength)(ts=ts_i, ys=ys_i, key=key_path)
-            path_vector.append(jnp.mean(path_len))
-
         # save the model
         SAVE_DIR = "saved_models"
         save_suffix = (
@@ -222,7 +213,6 @@ def main(
                 SAVE_DIR + "/" + save_name + save_suffix + "_step_" + str(step) + ".eqx"
             )
             eqx.tree_serialise_leaves(fn, model)
-            print(f"latent spread: {latent_spread/ np.max(latent_spread)}")
 
 
 # code entry
@@ -246,7 +236,6 @@ if __name__ == "__main__":
     # optionally move to float64 precision
     if args.precision64:
         from jax import config
-
         config.update("jax_enable_x64", True)
 
     main(
