@@ -34,7 +34,7 @@ This work introduces a **path-length regularization** strategy: instead of the s
 - **Configurable Training**: Easily adjust model, solver, and training hyperparameters via configuration files.  
 
 <img src="/images/pipeline.png" height="300">
----
+
 
 ## Examples
 <img src="/images/harmonic.png" height="400">
