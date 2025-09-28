@@ -1,6 +1,12 @@
-# -------------------------------------------- #
-#         sketchy latent ODE model bones       #
-# -------------------------------------------- #
+# -------------------------------------------------- #
+#              Path-minimised latent ODEs            #
+#           Matt Sampson and Peter Melchior          #
+#                        2025                        #
+#                                                    #
+# Initial LatentODE-RNN architecture modified from   #
+# https://arxiv.org/abs/1907.03907, with jax/diffrax #
+# implementation initially from Patrick Kidger       #
+# -------------------------------------------------- #
 # import mlp modules
 import os
 import time
@@ -111,10 +117,8 @@ class LatentODE(eqx.Module):
         for data_i in reversed(data):
             hidden = self.rnn_cell(data_i, hidden)
         context = self.hidden_to_latent(hidden)
-        mean, logstd = context[: self.latent_size], context[self.latent_size :]
-        std = jnp.exp(logstd)
-        latent = mean + jr.normal(key, (self.latent_size,)) * std
-        return latent, mean, std
+        latent, std = context[: self.latent_size], context[self.latent_size :]
+        return latent, std
 
     # Decoder of the VAE
     def _sample(self, ts, latent):
@@ -139,36 +143,9 @@ class LatentODE(eqx.Module):
         )
         return jax.vmap(self.hidden_to_data)(sol.ys)
 
-    # Standard LatentODE-RNN loss as in https://arxiv.org/abs/1907.03907
-    @staticmethod
-    def _loss(ys, pred_ys, mean, std):
-        # -log p_θ with Gaussian p_θ
-        reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
-        # KL(N(mean, std^2) || N(0, 1))
-        variational_loss = 0.5 * jnp.sum(mean**2 + std**2 - 2 * jnp.log(std) - 1)
-        return reconstruction_loss + variational_loss
-
-    # Standard loss plus path penanlty
-    def _pathpenaltyloss(self, ys, pred_ys, pred_latent, mean, std):
-        # -log p_θ with Gaussian p_θ
-        reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
-        # KL(N(mean, std^2) || N(0, 1))
-        variational_loss = 0.5 * jnp.sum(mean**2 + std**2 - 2 * jnp.log(std) - 1)
-        # Mahalanobis distance between latents \sqrt{(x - y)^T \Sigma^{-1} (x - y)}
-        diff = jnp.diff(pred_latent, axis=0)
-        std_latent = self.hidden_to_latent(
-            self.latent_to_hidden(std)
-        )  # get the latent space std
-        Cov = jnp.eye(diff.shape[1]) * std_latent  # latent_state
-        Cov = jnp.linalg.inv(Cov)
-        d_latent = jnp.sqrt(jnp.abs(jnp.sum(jnp.dot(diff, Cov) @ diff.T, axis=1)))
-        d_latent = jnp.sum(d_latent)
-        alpha = self.alpha  # weighting parameter for distance penalty
-        return reconstruction_loss + variational_loss + alpha * d_latent
-
     # New loss function, no variational loss
     def _distanceloss(self, ys, pred_ys, pred_latent, std):
-        # -log p_θ with Gaussian p_θ
+        # MSE reconstruction loss
         reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
         # Mahalanobis distance between latents \sqrt{(x - y)^T \Sigma^{-1} (x - y)}
         diff = jnp.diff(pred_latent, axis=0)
@@ -187,13 +164,13 @@ class LatentODE(eqx.Module):
 
     # New loss function - parse in classification loss
     @staticmethod
-    def _sketchyloss(self, ys, pred_ys, pred_latent, std, latent_spread):
+    def _weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread):
         """
         This loss function aims to predict the weight values with the information
         of the classification loss they produce as a function of time.
         This helps with large deep networks where the classification loss
         is very sensetive to the exact weight values.
-        There is a sketchy weighting of the losses to ensure they are of similar magnitude.
+        There is an ad hoc weighting of the losses to ensure they are of similar magnitude.
         """
         # Mahalanobis distance between latents \sqrt{(x - y)^T \Sigma^{-1} (x - y)}
         diff = jnp.diff(pred_latent, axis=0)
@@ -223,27 +200,21 @@ class LatentODE(eqx.Module):
 
     # training routine with suite of 3 loss functions
     def train(self, ts, ys, latent_spread, *, key):
-        latent, mean, std = self._latent(ts, ys, key)
+        latent, std = self._latent(ts, ys, key)
         pred_ys = self._sample(ts, latent)
         # pred_latent = self._sampleLatent(ts, latent)
         int_fac = 1
         ts_interp = jnp.linspace(ts[0], ts[-1], len(ts) * int_fac)
         pred_latent = self._sampleLatent(ts_interp, latent)
-        # the classic VAE based LatentODE-RNN from https://arxiv.org/abs/1907.03907
-        if self.lossType == "default":
-            return self._loss(ys, pred_ys, mean, std)
-        # the classic LatentODE-RNN with the path length penalty
-        elif self.lossType == "mahalanobis":
-            return self._pathpenaltyloss(self, ys, pred_ys, pred_latent, mean, std)
         # our new autoencoder (not VAE) LatentODE-RNN with no variational loss
         elif self.lossType == "distance":
             return self._distanceloss(self, ys, pred_ys, pred_latent, std)
         # new autoencoder with
-        elif self.lossType == "sketchy":
-            return self._sketchyloss(self, ys, pred_ys, pred_latent, std, latent_spread)
+        elif self.lossType == "weighted":
+            return self._weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread)
         else:
             raise ValueError(
-                "lossType must be one of 'default', 'mahalanobis', 'distance' or 'sketchy'"
+                "lossType must be one of 'distance' or 'weighted'"
             )
 
     # Run just the decoder during inference.
