@@ -12,7 +12,7 @@ The approach is based on the paper:
 
 Latent ODEs are a powerful framework for modeling sequential data and complex dynamical systems. However, standard latent ODE models often struggle with long-term extrapolation and accurate inference of system parameters.  
 
-This work introduces a **path-length regularization** strategy: instead of the standard variational KL penalty, we penalize the **length of trajectories in latent space**. Encouraging shorter latent paths yields:
+This work introduces a **path-length regularization** strategy: instead of the standard variational KL penalty (turning the VAE into a standard AE), we penalize the **length of trajectories in latent space**. Encouraging shorter latent paths yields:
 
 - More time-invariant latent representations  
 - Faster and more stable training  
