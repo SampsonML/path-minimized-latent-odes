@@ -1,17 +1,53 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2401.07313-<COLOR>.svg)](https://arxiv.org/abs/2410.08923)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-# Path minimized latent ODEs 
+# Path-Minimized Latent ODEs
+
+This repository provides an implementation of **Path-Minimized Latent ODEs**, a modification to latent neural ODE models that improves extrapolation, interpolation, and inference of dynamical systems.  
+
+The approach is based on the paper:  
+**Path-Minimizing Latent ODEs for Improved Extrapolation and Inference**  
+*Matt L. Sampson, Peter Melchior* (2025) 
 
 ## Overview
-Latent ODE models provide flexible descriptions of dynamic systems, but
-they can struggle with extrapolation and predicting complicated non-linear dynamics.
-The latent ODE approach implicitly relies on encoders to identify unknown system
-parameters and initial conditions, whereas the evaluation times are known and directly
-provided to the ODE solver. This dichotomy can be exploited by encouraging timeindependent latent representations. By replacing the common variational penalty in latent space with an ℓ2 penalty on the path length of each system, the models
-learn data representations that can easily be distinguished from those of systems with different configurations.
 
-The general pipeline is below, noting we aim to minimize the distance of the trajectories z_i in latent space.
+Latent ODEs are a powerful framework for modeling sequential data and complex dynamical systems. However, standard latent ODE models often struggle with long-term extrapolation and accurate inference of system parameters.  
+
+This work introduces a **path-length regularization** strategy: instead of the standard variational KL penalty, we penalize the **length of trajectories in latent space**. Encouraging shorter latent paths yields:
+
+- More time-invariant latent representations  
+- Faster and more stable training  
+- Smaller recognition networks without loss of performance  
+- Improved interpolation and long-time extrapolation  
+- Superior simulation-based inference performance  
+
+---
+
+## Key Features
+
+- **Latent ODE with Path-Length Loss**: A drop-in replacement for KL-regularized latent ODEs.  
+- **Flexible Encoders**: Compatible with ODE-RNN, ODE-GRU, and ODE-LSTM encoders.  
+- **Improved Forecasting**: Demonstrated on systems including:
+  - Damped Harmonic Oscillator  
+  - Lane-Emden (self-gravitating fluid) equation  
+  - Lotka–Volterra predator-prey dynamics  
+- **Simulation-Based Inference**: Latents serve as effective summary statistics for parameter inference using normalizing flows.  
+- **Configurable Training**: Easily adjust model, solver, and training hyperparameters via configuration files.  
+
+---
+
 <img src="/images/pipeline.png" height="300">
+
+## Installation
+
+Clone the repository and install dependencies:
+
+```shell
+git clone https://github.com/SampsonML/path-minimized-latent-odes.git
+cd path-minimized-latent-odes
+pip install -r requirements.txt ***(to be comleted)
+```
+
+
 
 ### Examples
 <img src="/images/harmonic.png" height="400">
@@ -21,3 +57,16 @@ The general pipeline is below, noting we aim to minimize the distance of the tra
 
 ## Usage 
 To be complete
+
+### Citation
+If you make use of this code please cite:
+```bibtex
+@article{sampson2024pathmin,
+  title={Path-Minimizing Latent ODEs for Improved Extrapolation and Inference},
+  author={Sampson, Matt L. and Melchior, Peter},
+  journal={arXiv preprint arXiv:2410.08923},
+  year={2024}
+}
+```
+
+
