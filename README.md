@@ -20,7 +20,6 @@ This work introduces a **path-length regularization** strategy: instead of the s
 - Improved interpolation and long-time extrapolation  
 - Superior simulation-based inference performance  
 
----
 
 ## Key Features
 
