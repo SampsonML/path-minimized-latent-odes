@@ -1,0 +1,7 @@
+jax[cpu]>=0.4.13
+jaxlib>=0.4.13
+numpy>=1.21
+diffrax>=0.4.1
+equinox>=0.10.1
+optax>=0.1.5
+
