@@ -9,8 +9,6 @@ import jax.numpy as jnp
 from jax import grad, jit, vmap
 from jax import random
 from jax.scipy.special import logsumexp
-import tensorflow as tf
-import tensorflow_datasets as tfds
 import random as rd
 
 # import lode modules
