@@ -36,6 +36,13 @@ This work introduces a **path-length regularization** strategy: instead of the s
 <img src="/images/pipeline.png" height="300">
 ---
 
+## Examples
+<img src="/images/harmonic.png" height="400">
+
+
+<img src="/images/lotka-volterra.png" height="300">
+
+
 ## Installation
 
 Clone the repository and install dependencies:
@@ -45,14 +52,6 @@ git clone https://github.com/SampsonML/path-minimized-latent-odes.git
 cd path-minimized-latent-odes
 pip install -r requirements.txt ***(to be comleted)
 ```
-
-
-
-### Examples
-<img src="/images/harmonic.png" height="400">
-
-
-<img src="/images/lotka-volterra.png" height="300">
 
 ## Usage 
 To be complete
