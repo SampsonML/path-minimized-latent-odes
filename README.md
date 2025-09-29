@@ -36,6 +36,8 @@ This work introduces a **path-length regularization** strategy: instead of the s
 
 
 ## Examples
+We show some examples on a damped harmonic oscillator and a preditor prey system (Lotka-Volterra).
+It is clear that with the path-minimisation and removal of the Gaussian form in latent space we see more accurate prediction both at early and late (extrapolated) times.
 <img src="/images/harmonic.png" height="400">
 
 
@@ -60,6 +62,7 @@ To train a path-minimised latent ODE model we can then run the following
 ```python
 python train.py --dims 3 --hidden 20 --latent 20 --width 20 --depth 2 --alpha 1 --lr 0.01 --steps 5000 --data "/path/to/data_array/" --time "/path/to/time_array/" --precision64 True
 ```
+Please contact directly at matt.sampson@princeton.edu with direct questions.
 
 ### Citation
 If you make use of this code please cite:
