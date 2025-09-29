@@ -61,7 +61,18 @@ pip install -r requirements.txt
 ## Usage 
 To train a path-minimised latent ODE model we can then run the following 
 ```python
-python train.py --dims 3 --hidden 20 --latent 20 --width 20 --depth 2 --alpha 1 --lr 0.01 --steps 5000 --data "/path/to/data_array/" --time "/path/to/time_array/" --precision64 True
+python train.py \
+    --dims 3 \
+    --hidden 20 \
+    --latent 20 \
+    --width 20 \
+    --depth 2 \
+    --alpha 1 \
+    --lr 0.01 \
+    --steps 5000 \
+    --data "/path/to/data_array/" \
+    --time "/path/to/time_array/" \
+    --precision64 True
 ```
 Please contact directly at matt.sampson@princeton.edu with direct questions.
 
