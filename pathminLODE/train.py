@@ -43,10 +43,10 @@ parser.add_argument("--steps", type=int, default=1000, help="number of training 
 parser.add_argument("--save_every", type=int, default=500, help="save every n steps")
 parser.add_argument("--seed", type=int, default=1992, help="random seed")
 parser.add_argument("--train", type=bool, default=True, help="whether to train or load")
+parser.add_argument("--name", type=str, default="lode_model", help="name to save model")
 parser.add_argument(
     "--precision64", type=bool, default=True, help="use float64 precision"
 )
-
 
 # getting the data
 def get_data(path_w, path_t):
@@ -55,7 +55,6 @@ def get_data(path_w, path_t):
     times = jnp.array(times)
     w1 = jnp.array(w1)
     return times, w1
-
 
 # make an iterator for the dataset
 def dataloader(arrays, batch_size, *, key):
@@ -141,6 +140,7 @@ def main(
 
     optim = optax.adam(learning_rate=schedule)
     opt_state = optim.init(eqx.filter(lode_model, eqx.is_inexact_array))
+    loss_vector = []
 
     for step, (ts_i, ys_i) in zip(
         range(steps), dataloader((ts, ys), batch_size, key=loader_key)
@@ -246,6 +246,7 @@ if __name__ == "__main__":
     steps = args.steps
     save_every = args.save_every
     seed = args.seed
+    save_name = args.name
 
     # optionally move to float64 precision
     if args.precision64:
