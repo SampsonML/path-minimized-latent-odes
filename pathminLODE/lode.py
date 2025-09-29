@@ -197,17 +197,17 @@ class LatentODE(eqx.Module):
         return distance_loss + loss
 
     # training routine with suite of 3 loss functions
-    def train(self, ts, ys, latent_spread, *, key):
-        latent, std = self._latent(ts, ys, key)
+    def train(self, ts, ys, latent_spread, ts_, ys_, *, key):
+        latent, std = self._latent(ts_, ys_, key)
         pred_ys = self._sample(ts, latent)
-        # pred_latent = self._sampleLatent(ts, latent)
         int_fac = 1
         ts_interp = jnp.linspace(ts[0], ts[-1], len(ts) * int_fac)
         pred_latent = self._sampleLatent(ts_interp, latent)
         # our new autoencoder (not VAE) LatentODE-RNN with no variational loss
-        elif self.lossType == "distance":
-            return self._distanceloss(self, ys, pred_ys, pred_latent, std)
-        # new autoencoder with
+        if self.lossType == "distance":
+            print(f"here")
+            return self._distanceloss(self, ys, pred_ys, pred_latent, latent_spread)
+        # new autoencoder with equal weighted dimensions
         elif self.lossType == "weighted":
             return self._weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread)
         else:

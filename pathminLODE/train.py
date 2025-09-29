@@ -33,7 +33,7 @@ parser.add_argument("--hidden", type=int, default=20, help="size of the hidden l
 parser.add_argument("--latent", type=int, default=20, help="size of the latent space")
 parser.add_argument("--width", type=int, default=20, help="width of the neural ODE")
 parser.add_argument("--depth", type=int, default=1, help="depth of the neural ODE")
-parser.add_argument("--alpha", type=float, default=0.0, help="regularization parameter")
+parser.add_argument("--alpha", type=float, default=0.5, help="regularization parameter")
 parser.add_argument(
     "--lossType", type=str, default="distance", help="type of loss function"
 )
@@ -42,6 +42,7 @@ parser.add_argument("--lr", type=float, default=1e-3, help="learning rate")
 parser.add_argument("--steps", type=int, default=1000, help="number of training steps")
 parser.add_argument("--save_every", type=int, default=500, help="save every n steps")
 parser.add_argument("--seed", type=int, default=1992, help="random seed")
+parser.add_argument("--train", type=bool, default=True, help="whether to train or load")
 parser.add_argument(
     "--precision64", type=bool, default=True, help="use float64 precision"
 )
@@ -89,9 +90,36 @@ def main(
     full_every=1,        # take a full path every n steps
     min_path=5,          # minimum path length to sample
     max_path=20,         # maximum path length to sample
+    train=True,          # whether to train or load a model
 ):
 
+    @eqx.filter_value_and_grad
+    def loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_):
+        batch_size, _ = ts_i.shape
+        key_i = jr.split(key_i, batch_size)
+        latent_spread = jnp.repeat(latent_spread, batch_size).reshape(
+            batch_size, latent_spread.shape[-1]
+        )
+        loss = jax.vmap(model.train)(
+            ts_i, ys_i, latent_spread, ts_i_, ys_i_, key=key_i
+        )
+        return jnp.mean(loss)
+
+    @eqx.filter_jit
+    def make_step(model, opt_state, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_):
+        value, grads = loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_)
+        key_i = jr.split(key_i, 1)[0]
+        updates, opt_state = optim.update(grads, opt_state)
+        model = eqx.apply_updates(model, updates)
+        return value, model, opt_state, key_i
+   
+    # get the dataset 
+    data_path = "/Users/mattsampson/Research/PrincetonThesis/latent_ode_optimizer/lode_training_data/cnn_data_validation_loss.npy"
+    time_path = "/Users/mattsampson/Research/PrincetonThesis/latent_ode_optimizer/lode_training_data/cnn_data_validation_time.npy"
+    ts, ys = get_data(data_path, time_path)
+
     # instantiate the model
+    model_key, loader_key, train_key = jr.split(jr.PRNGKey(seed), 3)
     lode_model = LatentODE(
         data_size=model_size,
         hidden_size=hidden_size,
@@ -103,26 +131,6 @@ def main(
         lossType=lossType,
     )
 
-    @eqx.filter_value_and_grad
-    def loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_):
-        batch_size, _ = ts_i.shape
-        key_i = jr.split(key_i, batch_size)
-        latent_spread = jnp.repeat(latent_spread, batch_size).reshape(
-            batch_size, latent_spread.shape[-1]
-        )
-        loss = jax.vmap(model.train)(
-            ts_i, ys_i, latent_spread, ys_=ys_i_, ts_=ts_i_, key=key_i
-        )
-        return jnp.mean(loss)
-
-    @eqx.filter_jit
-    def make_step(model, opt_state, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_):
-        value, grads = loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_)
-        key_i = jr.split(key_i, 1)[0]
-        updates, opt_state = optim.update(grads, opt_state)
-        model = eqx.apply_updates(model, updates)
-        return value, model, opt_state, key_i
-
     schedule = optax.schedules.cosine_onecycle_schedule(
         transition_steps=steps,
         peak_value=learning_rate,
@@ -130,8 +138,9 @@ def main(
         div_factor=25.0,
         final_div_factor=1000.0,
     )
+
     optim = optax.adam(learning_rate=schedule)
-    opt_state = optim.init(eqx.filter(model, eqx.is_inexact_array))
+    opt_state = optim.init(eqx.filter(lode_model, eqx.is_inexact_array))
 
     for step, (ts_i, ys_i) in zip(
         range(steps), dataloader((ts, ys), batch_size, key=loader_key)
@@ -161,6 +170,11 @@ def main(
                 # convert start and end index to be used as slicing indices
                 ts_i_ = ts_i[:, start_idx:end_idx]
                 ys_i_ = ys_i[:, start_idx:end_idx, :]
+            else:
+                # split data to input (for encoding) and output (for loss calculation)
+                # is no "sub-trajectory" sampling input=output
+                ts_i_ = ts_i
+                ys_i_ = ys_i
 
             # get the standard deviation to ensure good spread
             batch_size_i, _ = ts_i.shape
@@ -169,12 +183,12 @@ def main(
                 latents,
                 _,
             ) = jax.vmap(
-                model._latent
+                lode_model._latent
             )(ts_i, ys_i, spread_key)
             latent_spread = jnp.std(latents, axis=0)
 
-            value, model, opt_state, train_key = make_step(
-                model,
+            value, lode_model, opt_state, train_key = make_step(
+                lode_model,
                 opt_state,
                 ts_i,
                 ys_i,
@@ -190,7 +204,7 @@ def main(
         # load the model instead here
         else:
             modelName = "saved_models/" + MODEL_NAME
-            model = eqx.tree_deserialise_leaves(modelName, model)
+            lode_model = eqx.tree_deserialise_leaves(modelName, lode_model)
 
         # save the model
         SAVE_DIR = "saved_models"
@@ -212,7 +226,7 @@ def main(
             fn = (
                 SAVE_DIR + "/" + save_name + save_suffix + "_step_" + str(step) + ".eqx"
             )
-            eqx.tree_serialise_leaves(fn, model)
+            eqx.tree_serialise_leaves(fn, lode_model)
 
 
 # code entry
@@ -251,6 +265,7 @@ if __name__ == "__main__":
         steps=steps,
         save_every=save_every,
         seed=seed,
+        train=True
     )
 
     print("training successfully completed!")
