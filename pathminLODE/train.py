@@ -44,6 +44,8 @@ parser.add_argument("--save_every", type=int, default=500, help="save every n st
 parser.add_argument("--seed", type=int, default=1992, help="random seed")
 parser.add_argument("--train", type=bool, default=True, help="whether to train or load")
 parser.add_argument("--name", type=str, default="lode_model", help="name to save model")
+parser.add_argument("--data", type=str, default="/", help="path of data values")
+parser.add_argument("--time", type=str, default="/", help="path of time values")
 parser.add_argument(
     "--precision64", type=bool, default=True, help="use float64 precision"
 )
@@ -74,22 +76,25 @@ def dataloader(arrays, batch_size, *, key):
 
 
 def main(
-    model_size=1,        # dimensions of the data
-    hidden_size=10,      # size of the hidden layers
-    latent_size=10,      # size of the latent space
-    width_size=10,       # width of the MLP
-    depth=1,             # depth of the MLP
-    alpha=1,             # strength of pathmin regularizer
-    lossType="distance", # type of loss function
-    batch_size=1,        # size of the batches
-    learning_rate=0.1,   # initial learning rate
-    steps=1000,          # number of training steps
-    save_every=500,      # save every n steps
-    seed=1992,           # random seed for reproducibility
-    full_every=1,        # take a full path every n steps
-    min_path=5,          # minimum path length to sample
-    max_path=20,         # maximum path length to sample
-    train=True,          # whether to train or load a model
+    model_size=1,           # dimensions of the data
+    hidden_size=10,         # size of the hidden layers
+    latent_size=10,         # size of the latent space
+    width_size=10,          # width of the MLP
+    depth=1,                # depth of the MLP
+    alpha=1,                # strength of pathmin regularizer
+    lossType="distance",    # type of loss function
+    batch_size=1,           # size of the batches
+    learning_rate=0.1,      # initial learning rate
+    steps=1000,             # number of training steps
+    save_every=500,         # save every n steps
+    seed=1992,              # random seed for reproducibility
+    full_every=1,           # take a full path every n steps
+    min_path=5,             # minimum path length to sample
+    max_path=20,            # maximum path length to sample
+    train=True,             # whether to train or load a model
+    data_path="/",          # path to the data values
+    time_path="/",          # path to the time values
+    save_name="lode_model", # name to save the model
 ):
 
     @eqx.filter_value_and_grad
@@ -113,8 +118,6 @@ def main(
         return value, model, opt_state, key_i
    
     # get the dataset 
-    data_path = "/Users/mattsampson/Research/PrincetonThesis/latent_ode_optimizer/lode_training_data/cnn_data_validation_loss.npy"
-    time_path = "/Users/mattsampson/Research/PrincetonThesis/latent_ode_optimizer/lode_training_data/cnn_data_validation_time.npy"
     ts, ys = get_data(data_path, time_path)
 
     # instantiate the model
@@ -246,6 +249,9 @@ if __name__ == "__main__":
     steps = args.steps
     save_every = args.save_every
     seed = args.seed
+    train_flag = args.train
+    data_path = args.data 
+    time_path = args.time
     save_name = args.name
 
     # optionally move to float64 precision
@@ -266,7 +272,10 @@ if __name__ == "__main__":
         steps=steps,
         save_every=save_every,
         seed=seed,
-        train=True
+        train=train_flag,
+        data_path=data_path,
+        time_path=time_path,
+        save_name=save_name
     )
 
     print("training successfully completed!")
