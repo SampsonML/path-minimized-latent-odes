@@ -94,8 +94,8 @@ python train.py \
     --alpha 1 \
     --lr 0.01 \
     --steps 500 \
-    --data "data/dho_data.npy/" \
-    --time "data/time.npy/" \
+    --data "data/dho_data.npy" \
+    --time "data/time.npy" \
     --precision64 True
 ```
 
