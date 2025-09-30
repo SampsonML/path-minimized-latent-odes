@@ -135,7 +135,7 @@ class LatentODE(eqx.Module):
             ts[-1],
             dt0,
             y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-4, atol=1e-4),
+            stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5),
             saveat=diffrax.SaveAt(ts=ts),
             adjoint=adjoint,
         )
@@ -230,7 +230,7 @@ class LatentODE(eqx.Module):
             ts[-1],
             dt0,
             y0,
-            stepsize_controller=diffrax.PIDController(rtol=1e-6, atol=1e-6),
+            stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5),
             saveat=diffrax.SaveAt(ts=ts),
         )
         return jax.vmap(self.hidden_to_latent)(sol.ys)

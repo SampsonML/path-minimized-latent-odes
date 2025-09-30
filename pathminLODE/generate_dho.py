@@ -13,8 +13,8 @@ def get_data(dataset_size, *, key):
     y0 = jr.normal(ykey, (dataset_size, 2))
 
     t0 = 0
-    t1 = 2 + jr.uniform(tkey1, (dataset_size,))
-    ts = jr.uniform(tkey2, (dataset_size, 20)) * (t1[:, None] - t0) + t0
+    t1 = 5 + jr.uniform(tkey1, (dataset_size,))
+    ts = jr.uniform(tkey2, (dataset_size, 40)) * (t1[:, None] - t0) + t0
     ts = jnp.sort(ts)
     dt0 = 0.1
 
