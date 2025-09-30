@@ -76,6 +76,8 @@ python train.py \
 ```
 Please contact directly at matt.sampson@princeton.edu with direct questions.
 
+## Demo
+
 Here is a demo to make sure things are working right, first enter the pathminLODE directory then run
 ```shell
 python generate_dho.py
