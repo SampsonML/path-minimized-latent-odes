@@ -76,6 +76,28 @@ python train.py \
 ```
 Please contact directly at matt.sampson@princeton.edu with direct questions.
 
+Here is a demo to make sure things are working right, first enter the pathminLODE directory then run
+```shell
+python generate_dho.py
+```
+Now run this to train a path-minimized latent ODE, this should be jitted and run quite fast (seconds to minutes at most).
+
+```python
+python train.py \
+    --dims 2 \
+    --hidden 20 \
+    --latent 20 \
+    --width 20 \
+    --depth 2 \
+    --alpha 1 \
+    --lr 0.01 \
+    --steps 500 \
+    --data "data/dho_data.npy/" \
+    --time "data/time.npy/" \
+    --precision64 True
+```
+
+
 ### Citation
 If you make use of this code please cite:
 ```bibtex
