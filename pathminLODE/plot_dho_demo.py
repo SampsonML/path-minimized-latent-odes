@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 import jax.random as random 
 from lode import LatentODE 
+import equinox as eqx
 
 # generate some random keys 
 sample_key, model_key = random.split(random.PRNGKey(0), 2)
@@ -23,6 +24,8 @@ lode_model = LatentODE(
     alpha=0.1, # this doesn't matter at inference but still must be set
     lossType='distance',
 )
+name = "saved_models/lode_modelhsz_20_lsz_20_w_20_d_2_lossType_distance_step_499.eqx"
+lode_model = eqx.tree_deserialise_leaves(name, lode_model) 
 
 # load some sample DHO trajectories 
 ys = np.load('data/dho_data.npy')
