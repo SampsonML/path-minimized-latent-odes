@@ -70,8 +70,8 @@ python train.py \
     --alpha 1 \
     --lr 0.01 \
     --steps 5000 \
-    --data "/path/to/data_array/" \
-    --time "/path/to/time_array/" \
+    --data "/path/to/data_vector" \
+    --time "/path/to/time_vector" \
     --precision64 True
 ```
 Please contact directly at matt.sampson@princeton.edu with direct questions.
@@ -80,6 +80,7 @@ Please contact directly at matt.sampson@princeton.edu with direct questions.
 
 Here is a demo to make sure things are working right, first enter the pathminLODE directory then run
 ```shell
+cd pathminLODE
 python generate_dho.py
 ```
 Now run this to train a path-minimized latent ODE, this should be jitted and run quite fast (seconds to minutes at most).
