@@ -87,17 +87,20 @@ Now run this to train a path-minimized latent ODE, this should be jitted and run
 ```python
 python train.py \
     --dims 2 \
-    --hidden 20 \
-    --latent 20 \
+    --hidden 10 \
+    --latent 10 \
     --width 20 \
     --depth 2 \
     --alpha 1 \
-    --lr 0.01 \
+    --lr 0.02 \
     --steps 500 \
     --data "data/dho_data.npy" \
     --time "data/time.npy" \
     --precision64 True
 ```
+
+You should generate something like this 
+<img src="/images/dho_lode_demo.png" height="500">
 
 
 ### Citation
