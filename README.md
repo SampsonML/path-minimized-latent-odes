@@ -68,6 +68,7 @@ python train.py \
     --width 20 \
     --depth 2 \
     --alpha 1 \
+    --dt 0.1 \
     --lr 0.01 \
     --steps 5000 \
     --data "/path/to/data_vector" \
@@ -93,6 +94,7 @@ python train.py \
     --width 20 \
     --depth 2 \
     --alpha 1 \
+    --dt 0.1 \
     --lr 0.02 \
     --steps 500 \
     --data "data/dho_data.npy" \
