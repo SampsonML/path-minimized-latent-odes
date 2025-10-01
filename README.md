@@ -71,6 +71,7 @@ python train.py \
     --dt 0.1 \
     --lr 0.01 \
     --steps 5000 \
+    --batch_size 128 \
     --data "/path/to/data_vector" \
     --time "/path/to/time_vector" \
     --precision64 True
@@ -96,6 +97,7 @@ python train.py \
     --alpha 1 \
     --dt 0.1 \
     --lr 0.02 \
+    --batch_size 128 \
     --steps 500 \
     --data "data/dho_data.npy" \
     --time "data/time.npy" \
