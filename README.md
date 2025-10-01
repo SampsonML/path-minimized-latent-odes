@@ -107,6 +107,21 @@ python train.py \
 You should generate something like this 
 <img src="/images/dho_lode_demo.png" height="500">
 
+## Notes on hyperparameter choices
+**dims**: this is the dimensions of the data vector which should be in the shape (batch_index, data_len, data_dims)
+**hidden**: the size of the hidden dimensions of the encoder model (often just set this equal to latent)
+**latent**: the dimensionality of the latent space, conventional wisdom when using a VAE is this should be roughly equal to the *true* dimensionality of your system (note not data dims). With the path-minimiser we encourage redundancy of extra dimensions so if unsure...go large
+**width**: the width of the MLP layers, note the MLP represents df/dt in latent space 
+**depth**: how many hidden layers in the MLP 
+**alpha**: the strength of the path length penalty, reccomend roughly 0.1 -> 1
+**dt**: the time step (initial for adaptive solvers) of the numerical integrator. Note this should always be lower than the smallest dt in the data. I.e. if you have 10 points between 0 -> 2 seconds set dt < 2 / 10
+**lr**: we use a cosine-onecycle lr schedule, this sets the peak value [see docs](https://optax.readthedocs.io/en/latest/api/optimizer_schedules.html)
+**batch_size**: the batch size for the the mini-batch GD
+**steps**: total training steps
+**data**: the path to the data vectors in shape (batch_index, data_len, data_dims)
+**time**: path to the time vectors in shape (batch_index, data_len) 
+**precision64**: boolean to set float64 (jax automatically works in float32), for ODEs that are somewhat stiff, use float64. If you can afford it, use float64.
+
 
 ### Citation
 If you make use of this code please cite:
