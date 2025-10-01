@@ -25,7 +25,7 @@ lode_model = LatentODE(
     dt=0.1,
     lossType='distance',
 )
-name = "saved_models/lode_modelhsz_10_lsz_10_w_20_d_2_lossType_distance_step_499.eqx"
+name = "saved_models/lode_modelhsz_10_lsz_10_w_20_d_2_lossType_distance_step_999.eqx"
 lode_model = eqx.tree_deserialise_leaves(name, lode_model) 
 
 # load some sample DHO trajectories 
