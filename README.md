@@ -110,7 +110,8 @@ python train.py \
 ```
 
 Then upon completion run 
-```python plot_dho_demo.py
+```python
+python plot_dho_demo.py
 ```
 
 You should generate something like this 
