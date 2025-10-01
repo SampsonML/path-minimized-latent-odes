@@ -54,8 +54,8 @@ git clone https://github.com/SampsonML/path-minimized-latent-odes.git
 cd path-minimized-latent-odes
 pip install -r requirements.txt 
 ```
-> **Note:** This model requires JAX with CUDA support if you want GPU acceleration.
-> To do this please visit here (https://docs.jax.dev/en/latest/installation.html) for the latest methods for GPU and TPU compatible JAX installations
+> **Note:** The requirements instals jax[cpu], to run this model with CUDA support if you want GPU acceleration please install the appropriate jax flavour.
+> To do this please visit here (https://docs.jax.dev/en/latest/installation.html) for the latest methods for GPU and TPU compatible JAX installations, noting mainly the version of the CUDA drivers on your machine (i.e. 12.X, 13.X)
 
 
 ## Usage 
@@ -80,7 +80,7 @@ Please contact directly at matt.sampson@princeton.edu with direct questions.
 
 ## Demo
 
-Here is a demo to make sure things are working right, first enter the pathminLODE directory then run
+Here is a demo to make sure things are working right, aftern installation run
 ```shell
 cd pathminLODE
 python generate_dho.py
