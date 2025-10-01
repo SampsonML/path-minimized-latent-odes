@@ -85,7 +85,7 @@ Please contact directly at matt.sampson@princeton.edu with direct questions.
 
 ## Demo
 
-Here is a demo to make sure things are working right, aftern installation run
+Here is a demo to make sure things are working right, after installation run
 ```shell
 cd pathminLODE
 python generate_dho.py
