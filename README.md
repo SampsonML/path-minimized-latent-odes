@@ -109,6 +109,10 @@ python train.py \
     --precision64 True
 ```
 
+Then upon completion run 
+```python plot_dho_demo.py
+```
+
 You should generate something like this 
 <img src="/images/dho_lode_demo.png" height="500">
 
