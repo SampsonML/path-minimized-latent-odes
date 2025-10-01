@@ -22,6 +22,7 @@ lode_model = LatentODE(
     depth=2,
     key=model_key,
     alpha=1, # this doesn't matter at inference but still must be set
+    dt=0.1,
     lossType='distance',
 )
 name = "saved_models/lode_modelhsz_10_lsz_10_w_20_d_2_lossType_distance_step_499.eqx"
@@ -38,7 +39,7 @@ t = jnp.array(ts[1992,:])
 # now create the latent encoding 
 z0, _ = lode_model._latent(t, y, sample_key)
 # now integrate and decode the trajectory 
-t_eval = jnp.linspace(0, 10, 200)
+t_eval = jnp.linspace(0, 15, 200)
 y_t = lode_model._sample(t_eval, z0)
 
 # plot the comparisons 
@@ -47,7 +48,8 @@ plt.plot(t, y[:,0], 'o', label='position (exact)', alpha=0.5, c='firebrick')
 plt.plot(t, y[:,1], 'o', label='velocity', alpha=0.5, c='navy')
 plt.plot(t_eval, y_t[:,0], '-', label='position (LODE)', alpha=0.8, c='firebrick')
 plt.plot(t_eval, y_t[:,1], '-', label='velocity', alpha=0.8, c='navy')
-plt.xlabel('time') 
+plt.xlabel('time (s)') 
+plt.ylabel('value (arb)')
 plt.legend()
 plt.title('Damped Harmonic Oscillator: Data vs LODE Model')
 plt.savefig('dho_lode_demo.png', dpi=300)

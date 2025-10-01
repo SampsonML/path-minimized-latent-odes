@@ -65,6 +65,8 @@ class LatentODE(eqx.Module):
     latent_size: int
     alpha: int
 
+    dt: float = 0.1
+
     lossType: str
 
     def __init__(
@@ -76,6 +78,7 @@ class LatentODE(eqx.Module):
         width_size,
         depth,
         alpha,
+        dt,
         key,
         lossType,
         **kwargs,
@@ -120,7 +123,7 @@ class LatentODE(eqx.Module):
 
     # Decoder 
     def _sample(self, ts, latent):
-        dt0 = 0.1
+        dt0 = self.dt
         y0 = self.latent_to_hidden(latent)
         solver = (
             diffrax.Tsit5()
@@ -221,7 +224,7 @@ class LatentODE(eqx.Module):
         return self._sample(ts, latent)
 
     def _sampleLatent(self, ts, latent):
-        dt0 = 0.1  # selected as a reasonable choice for this problem
+        dt0 = self.dt  
         y0 = self.latent_to_hidden(latent)
         sol = diffrax.diffeqsolve(
             diffrax.ODETerm(self.func),

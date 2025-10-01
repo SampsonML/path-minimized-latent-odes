@@ -34,10 +34,11 @@ parser.add_argument("--latent", type=int, default=20, help="size of the latent s
 parser.add_argument("--width", type=int, default=20, help="width of the neural ODE")
 parser.add_argument("--depth", type=int, default=1, help="depth of the neural ODE")
 parser.add_argument("--alpha", type=float, default=0.5, help="regularization parameter")
+parser.add_argument("--dt", type=float, default=0.1, help="time step for integration")
 parser.add_argument(
     "--lossType", type=str, default="distance", help="type of loss function"
 )
-parser.add_argument("--batch_size", type=int, default=20, help="size of the batches")
+parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--lr", type=float, default=1e-3, help="learning rate")
 parser.add_argument("--steps", type=int, default=1000, help="number of training steps")
 parser.add_argument("--save_every", type=int, default=500, help="save every n steps")
@@ -82,6 +83,7 @@ def main(
     width_size=10,          # width of the MLP
     depth=1,                # depth of the MLP
     alpha=1,                # strength of pathmin regularizer
+    dt=0.1 ,                # time step for numerical integration
     lossType="distance",    # type of loss function
     batch_size=1,           # size of the batches
     learning_rate=0.1,      # initial learning rate
@@ -130,6 +132,7 @@ def main(
         depth=depth,
         key=model_key,
         alpha=alpha,
+        dt=dt,
         lossType=lossType,
     )
 
@@ -201,7 +204,7 @@ def main(
                 ts_i_,
             )
             end = time.time()
-            print(f"Step: {step}, Loss: {value}, Computation time: {end - start}")
+            print(f"Step: {step}, Loss: {value:.5f}, Computation time: {end - start:.5f}")
             loss_vector.append(value)
 
         # load the model instead here
@@ -243,6 +246,7 @@ if __name__ == "__main__":
     width_size = args.width
     depth = args.depth
     alpha = args.alpha
+    dt = args.dt
     lossType = args.lossType
     batch_size = args.batch_size
     learning_rate = args.lr
@@ -266,6 +270,7 @@ if __name__ == "__main__":
         width_size=width_size,
         depth=depth,
         alpha=alpha,
+        dt=dt,
         lossType=lossType,
         batch_size=batch_size,
         learning_rate=learning_rate,
