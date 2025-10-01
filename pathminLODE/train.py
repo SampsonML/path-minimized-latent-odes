@@ -51,6 +51,7 @@ parser.add_argument(
     "--precision64", type=bool, default=True, help="use float64 precision"
 )
 
+
 # getting the data
 def get_data(path_w, path_t):
     w1 = np.load(path_w)
@@ -58,6 +59,7 @@ def get_data(path_w, path_t):
     times = jnp.array(times)
     w1 = jnp.array(w1)
     return times, w1
+
 
 # make an iterator for the dataset
 def dataloader(arrays, batch_size, *, key):
@@ -77,26 +79,26 @@ def dataloader(arrays, batch_size, *, key):
 
 
 def main(
-    model_size=1,           # dimensions of the data
-    hidden_size=10,         # size of the hidden layers
-    latent_size=10,         # size of the latent space
-    width_size=10,          # width of the MLP
-    depth=1,                # depth of the MLP
-    alpha=1,                # strength of pathmin regularizer
-    dt=0.1 ,                # time step for numerical integration
-    lossType="distance",    # type of loss function
-    batch_size=1,           # size of the batches
-    learning_rate=0.1,      # initial learning rate
-    steps=1000,             # number of training steps
-    save_every=500,         # save every n steps
-    seed=1992,              # random seed for reproducibility
-    full_every=1,           # take a full path every n steps
-    min_path=5,             # minimum path length to sample
-    max_path=20,            # maximum path length to sample
-    train=True,             # whether to train or load a model
-    data_path="/",          # path to the data values
-    time_path="/",          # path to the time values
-    save_name="lode_model", # name to save the model
+    model_size=1,  # dimensions of the data
+    hidden_size=10,  # size of the hidden layers
+    latent_size=10,  # size of the latent space
+    width_size=10,  # width of the MLP
+    depth=1,  # depth of the MLP
+    alpha=1,  # strength of pathmin regularizer
+    dt=0.1,  # time step for numerical integration
+    lossType="distance",  # type of loss function
+    batch_size=1,  # size of the batches
+    learning_rate=0.1,  # initial learning rate
+    steps=1000,  # number of training steps
+    save_every=500,  # save every n steps
+    seed=1992,  # random seed for reproducibility
+    full_every=1,  # take a full path every n steps
+    min_path=5,  # minimum path length to sample
+    max_path=20,  # maximum path length to sample
+    train=True,  # whether to train or load a model
+    data_path="/",  # path to the data values
+    time_path="/",  # path to the time values
+    save_name="lode_model",  # name to save the model
 ):
 
     @eqx.filter_value_and_grad
@@ -106,9 +108,7 @@ def main(
         latent_spread = jnp.repeat(latent_spread, batch_size).reshape(
             batch_size, latent_spread.shape[-1]
         )
-        loss = jax.vmap(model.train)(
-            ts_i, ys_i, latent_spread, ts_i_, ys_i_, key=key_i
-        )
+        loss = jax.vmap(model.train)(ts_i, ys_i, latent_spread, ts_i_, ys_i_, key=key_i)
         return jnp.mean(loss)
 
     @eqx.filter_jit
@@ -118,8 +118,8 @@ def main(
         updates, opt_state = optim.update(grads, opt_state)
         model = eqx.apply_updates(model, updates)
         return value, model, opt_state, key_i
-   
-    # get the dataset 
+
+    # get the dataset
     ts, ys = get_data(data_path, time_path)
 
     # instantiate the model
@@ -156,15 +156,17 @@ def main(
             start = time.time()
 
             if full_every > 1:
-                """ 
-                we randomly sample points of various length to 
+                """
+                we randomly sample points of various length to
                 improve inference performance on sparse data
                 """
 
                 # choose a random integer between 1 and 100
                 key_e = jr.PRNGKey(step)  # always same runs will be long
                 key_start, key_end, key_points = jr.split(key_e, model_size)
-                n_path = jr.randint(key_start, shape=(), minval=min_path, maxval=max_path)
+                n_path = jr.randint(
+                    key_start, shape=(), minval=min_path, maxval=max_path
+                )
                 start_idx = jr.randint(
                     key_end, shape=(), minval=0, maxval=ys.shape[1] - n_path - 1
                 )
@@ -204,7 +206,9 @@ def main(
                 ts_i_,
             )
             end = time.time()
-            print(f"Step: {step}, Loss: {value:.5f}, Computation time: {end - start:.5f}")
+            print(
+                f"Step: {step}, Loss: {value:.5f}, Computation time: {end - start:.5f}"
+            )
             loss_vector.append(value)
 
         # load the model instead here
@@ -254,13 +258,14 @@ if __name__ == "__main__":
     save_every = args.save_every
     seed = args.seed
     train_flag = args.train
-    data_path = args.data 
+    data_path = args.data
     time_path = args.time
     save_name = args.name
 
     # optionally move to float64 precision
     if args.precision64:
         from jax import config
+
         config.update("jax_enable_x64", True)
 
     main(
@@ -280,7 +285,7 @@ if __name__ == "__main__":
         train=train_flag,
         data_path=data_path,
         time_path=time_path,
-        save_name=save_name
+        save_name=save_name,
     )
 
     print("training successfully completed!")

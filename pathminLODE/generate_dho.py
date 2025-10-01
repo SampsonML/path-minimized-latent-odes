@@ -7,6 +7,7 @@ import diffrax
 import numpy as np
 import os
 
+
 def get_data(dataset_size, *, key):
     ykey, tkey1, tkey2 = jr.split(key, 3)
 
@@ -37,11 +38,12 @@ def get_data(dataset_size, *, key):
 
     return ts, ys
 
+
 if __name__ == "__main__":
     key = jr.PRNGKey(0)
     ts, ys = get_data(5000, key=key)
     # save the data and time vectors seperately (just as a design choice)
-    # create the data directory here if it does not exist 
+    # create the data directory here if it does not exist
     os.makedirs("data", exist_ok=True)
     np.save("data/dho_data.npy", np.array(ys))
     np.save("data/time.npy", np.array(ts))

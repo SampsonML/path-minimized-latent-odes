@@ -110,7 +110,7 @@ class LatentODE(eqx.Module):
         self.alpha = alpha
         self.lossType = lossType
 
-    # Encoder 
+    # Encoder
     def _latent(self, ts, ys, key):
         ys_ = ys
         data = jnp.concatenate([ts[:, None], ys_], axis=1)
@@ -121,7 +121,7 @@ class LatentODE(eqx.Module):
         latent, std = context[: self.latent_size], context[self.latent_size :]
         return latent, std
 
-    # Decoder 
+    # Decoder
     def _sample(self, ts, latent):
         dt0 = self.dt
         y0 = self.latent_to_hidden(latent)
@@ -212,11 +212,11 @@ class LatentODE(eqx.Module):
             return self._distanceloss(self, ys, pred_ys, pred_latent, latent_spread)
         # new autoencoder with equal weighted dimensions
         elif self.lossType == "weighted":
-            return self._weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread)
-        else:
-            raise ValueError(
-                "lossType must be one of 'distance' or 'weighted'"
+            return self._weightedloss(
+                self, ys, pred_ys, pred_latent, std, latent_spread
             )
+        else:
+            raise ValueError("lossType must be one of 'distance' or 'weighted'")
 
     # Run just the decoder during inference.
     def sample(self, ts, *, key):
@@ -224,7 +224,7 @@ class LatentODE(eqx.Module):
         return self._sample(ts, latent)
 
     def _sampleLatent(self, ts, latent):
-        dt0 = self.dt  
+        dt0 = self.dt
         y0 = self.latent_to_hidden(latent)
         sol = diffrax.diffeqsolve(
             diffrax.ODETerm(self.func),
