@@ -29,6 +29,8 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dims", type=int, default=1, help="size of the data")
+parser.add_argument("--out_dims", type=int, default=None, help="size of the output data")
+parser.add_argument("--eval_cols", type=list, default=None, help="which columns to evaluate")
 parser.add_argument("--hidden", type=int, default=20, help="size of the hidden layers")
 parser.add_argument("--latent", type=int, default=20, help="size of the latent space")
 parser.add_argument("--width", type=int, default=20, help="width of the neural ODE")
@@ -79,7 +81,9 @@ def dataloader(arrays, batch_size, *, key):
 
 
 def main(
-    model_size=1,  # dimensions of the data
+    input_size=1,  # dimensions of the data
+    output_size=1, # output dimensions 
+    eval_cols=None, # which columns to evaluate
     hidden_size=10,  # size of the hidden layers
     latent_size=10,  # size of the latent space
     width_size=10,  # width of the MLP
@@ -102,18 +106,18 @@ def main(
 ):
 
     @eqx.filter_value_and_grad
-    def loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_):
+    def loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols):
         batch_size, _ = ts_i.shape
         key_i = jr.split(key_i, batch_size)
         latent_spread = jnp.repeat(latent_spread, batch_size).reshape(
             batch_size, latent_spread.shape[-1]
         )
-        loss = jax.vmap(model.train)(ts_i, ys_i, latent_spread, ts_i_, ys_i_, key=key_i)
+        loss = jax.vmap(model.train)(ts_i, ys_i, latent_spread, ts_i_, ys_i_, key=key_i, eval_cols=eval_cols)
         return jnp.mean(loss)
 
     @eqx.filter_jit
-    def make_step(model, opt_state, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_):
-        value, grads = loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_)
+    def make_step(model, opt_state, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols):
+        value, grads = loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols)
         key_i = jr.split(key_i, 1)[0]
         updates, opt_state = optim.update(grads, opt_state)
         model = eqx.apply_updates(model, updates)
@@ -125,7 +129,9 @@ def main(
     # instantiate the model
     model_key, loader_key, train_key = jr.split(jr.PRNGKey(seed), 3)
     lode_model = LatentODE(
-        data_size=model_size,
+        input_size=input_size,
+        output_size=output_size,
+        eval_cols=eval_cols,
         hidden_size=hidden_size,
         latent_size=latent_size,
         width_size=width_size,
@@ -244,7 +250,11 @@ if __name__ == "__main__":
 
     # for some clarity rename the args here
     args = parser.parse_args()
-    model_size = args.dims
+    input_size = args.dims
+    output_size = args.out_dims
+    if output_size is None: 
+        output_size = input_size
+    eval_cols = args.eval_cols
     hidden_size = args.hidden
     latent_size = args.latent
     width_size = args.width
@@ -269,7 +279,9 @@ if __name__ == "__main__":
         config.update("jax_enable_x64", True)
 
     main(
-        model_size=model_size,
+        input_size=input_size,
+        output_size=output_size,
+        eval_cols=eval_cols,
         hidden_size=hidden_size,
         latent_size=latent_size,
         width_size=width_size,

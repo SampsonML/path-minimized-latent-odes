@@ -61,6 +61,9 @@ class LatentODE(eqx.Module):
     latent_to_hidden: eqx.nn.MLP
     hidden_to_data: eqx.nn.Linear
 
+    input_size: int 
+    output_size: int 
+    eval_cols: list = None # list of columns to evaluate loss on
     hidden_size: int
     latent_size: int
     alpha: int
@@ -72,7 +75,9 @@ class LatentODE(eqx.Module):
     def __init__(
         self,
         *,
-        data_size,
+        input_size,
+        output_size,
+        eval_cols=None,
         hidden_size,
         latent_size,
         width_size,
@@ -98,13 +103,16 @@ class LatentODE(eqx.Module):
             key=mkey,
         )
         self.func = Func(scale, mlp)
-        self.rnn_cell = eqx.nn.GRUCell(data_size + 1, hidden_size, key=gkey)
+        self.rnn_cell = eqx.nn.GRUCell(input_size + 1, hidden_size, key=gkey)
         self.hidden_to_latent = eqx.nn.Linear(hidden_size, 2 * latent_size, key=hlkey)
         self.latent_to_hidden = eqx.nn.MLP(
             latent_size, hidden_size, width_size=width_size, depth=depth, key=lhkey
         )
-        self.hidden_to_data = eqx.nn.Linear(hidden_size, data_size, key=hdkey)
-
+        self.hidden_to_data = eqx.nn.Linear(hidden_size, output_size, key=hdkey)
+        self.dt = dt 
+        self.input_size = input_size 
+        self.output_size = output_size 
+        self.eval_cols = eval_cols
         self.hidden_size = hidden_size
         self.latent_size = latent_size
         self.alpha = alpha
@@ -112,8 +120,7 @@ class LatentODE(eqx.Module):
 
     # Encoder
     def _latent(self, ts, ys, key):
-        ys_ = ys
-        data = jnp.concatenate([ts[:, None], ys_], axis=1)
+        data = jnp.concatenate([ts[:, None], ys], axis=1)
         hidden = jnp.zeros((self.hidden_size,))
         for data_i in reversed(data):
             hidden = self.rnn_cell(data_i, hidden)
@@ -146,9 +153,14 @@ class LatentODE(eqx.Module):
 
     # New loss function, no variational loss
     @staticmethod
-    def _distanceloss(self, ys, pred_ys, pred_latent, std):
+    def _distanceloss(self, ys, pred_ys, pred_latent, std, eval_cols=None):
         # MSE reconstruction loss
-        reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
+        if eval_cols: # allow for reconstruction loss on specified columns only
+            ys_ = jnp.array(ys)
+            ys_ = ys_[:, eval_cols]
+            reconstruction_loss = 0.5 * jnp.sum((ys_ - pred_ys) ** 2)
+        else:
+            reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
         # Mahalanobis distance between latents \sqrt{(x - y)^T \Sigma^{-1} (x - y)}
         diff = jnp.diff(pred_latent, axis=0)
         std_latent = self.hidden_to_latent(
@@ -166,7 +178,7 @@ class LatentODE(eqx.Module):
 
     # New loss function - parse in classification loss
     @staticmethod
-    def _weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread):
+    def _weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread, eval_cols=None):
         """
         This loss function aims to predict the weight values with the information
         of the classification loss they produce as a function of time.
@@ -201,7 +213,7 @@ class LatentODE(eqx.Module):
         return distance_loss + loss
 
     # training routine with suite of 3 loss functions
-    def train(self, ts, ys, latent_spread, ts_, ys_, *, key):
+    def train(self, ts, ys, latent_spread, ts_, ys_, *, key, eval_cols=None):
         latent, std = self._latent(ts_, ys_, key)
         pred_ys = self._sample(ts, latent)
         int_fac = 1
@@ -209,11 +221,11 @@ class LatentODE(eqx.Module):
         pred_latent = self._sampleLatent(ts_interp, latent)
         # our new autoencoder (not VAE) LatentODE-RNN with no variational loss
         if self.lossType == "distance":
-            return self._distanceloss(self, ys, pred_ys, pred_latent, latent_spread)
+            return self._distanceloss(self, ys, pred_ys, pred_latent, latent_spread, eval_cols)
         # new autoencoder with equal weighted dimensions
         elif self.lossType == "weighted":
             return self._weightedloss(
-                self, ys, pred_ys, pred_latent, std, latent_spread
+                self, ys, pred_ys, pred_latent, std, latent_spread, eval_cols
             )
         else:
             raise ValueError("lossType must be one of 'distance' or 'weighted'")
