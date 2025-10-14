@@ -30,7 +30,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--dims", type=int, default=1, help="size of the data")
 parser.add_argument("--out_dims", type=int, default=None, help="size of the output data")
-parser.add_argument("--eval_cols", type=list, default=None, help="which columns to evaluate")
+parser.add_argument("--eval_cols", nargs="+" ,type=int, default=None, help="which columns to evaluate")
 parser.add_argument("--hidden", type=int, default=20, help="size of the hidden layers")
 parser.add_argument("--latent", type=int, default=20, help="size of the latent space")
 parser.add_argument("--width", type=int, default=20, help="width of the neural ODE")
@@ -112,7 +112,11 @@ def main(
         latent_spread = jnp.repeat(latent_spread, batch_size).reshape(
             batch_size, latent_spread.shape[-1]
         )
-        loss = jax.vmap(model.train)(ts_i, ys_i, latent_spread, ts_i_, ys_i_, key=key_i, eval_cols=eval_cols)
+        if eval_cols: # only evaluate at specified columns 
+            ys_i = ys_i[:, :, eval_cols]
+        # note here that ts_i and ys_i are the evaluation points 
+        # ts_i_ and ys_i_ are the inputs to get encoded into a z_0 
+        loss = jax.vmap(model.train)(ts_i, ys_i, latent_spread, ts_i_, ys_i_, key=key_i)
         return jnp.mean(loss)
 
     @eqx.filter_jit
@@ -210,6 +214,7 @@ def main(
                 latent_spread,
                 ys_i_,
                 ts_i_,
+                eval_cols=eval_cols
             )
             end = time.time()
             print(
