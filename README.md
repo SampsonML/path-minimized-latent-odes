@@ -120,13 +120,13 @@ You should generate something like this
 ## Mismatching inputs/outputs 
 A very nice part of using latent ODE models (as opposed to vanilla neural ODEs) is we have no requirement for the input dimensions to match our output dimensions. We use an autoencoder to map the input time series of dimension `N` to a single point `z_0` in latent space. We can request out decoder to map this latent trajectory `f(z,t)` to return any dimensionality trajectories we desire. Of course there are limitations to this are we may cause ourselves to operate in an over-determined (degenerate) or under-determined regime if you know what you are doing this is a perfectly fine thing to do. It is always much safer to have `input_dims > output_dims` (degenerate solutions), otherwise the evalutation of the reconstruction loss must be altered directly and with caution.
 
-Note, for convenience we do not require seperate input/output datasets, hence to make sure we are evaluating the correct variable we parse a new parameter `eval_cols=list` where this is a list of the column indices that are to be evaluated. To run nicely please ensure `len(eval_cols) = out_dims`. Here is an example on the dataset we just generated.
+Note, for convenience we do not require seperate input/output datasets, hence to make sure we are evaluating the correct variable we parse a new parameter `eval_cols` where this is a list of the column indices that are to be evaluated. To run nicely please ensure `len(eval_cols) = out_dims`. Here is an example on the dataset we just generated.
 
 ```python
 python train.py \
     --dims 2 \
     --out_dims 1 \
-    --eval_cols [0] \
+    --eval_cols 0 \
     --hidden 10 \
     --latent 10 \
     --width 20 \
