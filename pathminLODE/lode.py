@@ -150,7 +150,7 @@ class LatentODE(eqx.Module):
         return jax.vmap(self.hidden_to_data)(sol.ys)
 
     # New loss function, no variational loss
-    @staticmethod
+    #@staticmethod
     def _distanceloss(self, ys, pred_ys, pred_latent, std):
         # MSE reconstruction loss
         reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
@@ -170,7 +170,7 @@ class LatentODE(eqx.Module):
         return reconstruction_loss + distance_loss
 
     # New loss function - parse in classification loss
-    @staticmethod
+    #@staticmethod
     def _weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread):
         """
         This loss function aims to predict the weight values with the information
