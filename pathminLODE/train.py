@@ -49,6 +49,15 @@ parser.add_argument(
 
 # getting the data
 def get_data(path_w, path_t):
+    """
+    Loads training data from .npy files and converts them to JAX arrays.
+    Args:
+        path_w (str): Path to the observed values (ys). Shape: (Num_Trajectories, Time, Dims).
+        path_t (str): Path to the time steps (ts). Shape: (Num_Trajectories, Time).
+
+    Returns:
+        tuple[jnp.ndarray, jnp.ndarray]: A tuple (times, values) of JAX arrays ready for training.
+    """
     w1 = np.load(path_w)
     times = np.load(path_t)
     times = jnp.array(times)
@@ -58,6 +67,18 @@ def get_data(path_w, path_t):
 
 # make an iterator for the dataset
 def dataloader(arrays, batch_size, *, key):
+    """
+    An generator that yields shuffled batches of data.
+
+    Args:
+        arrays (tuple[jnp.ndarray]): A tuple of arrays to batch (e.g., (ts, ys)).
+                                     All arrays must have the same size in dimension 0.
+        batch_size (int): The number of trajectories per batch.
+        key (jax.random.PRNGKey): Random key for shuffling.
+
+    Yields:
+        tuple[jnp.ndarray]: A batch of (ts_batch, ys_batch).
+    """
     dataset_size = arrays[0].shape[0]
     assert all(array.shape[0] == dataset_size for array in arrays)
     indices = jnp.arange(dataset_size)
@@ -97,9 +118,29 @@ def main(
     time_path="/",  # path to the time values
     save_name="lode_model",  # name to save the model
 ):
+    """
+    Main training loop for the Path-Minimized Latent ODE.
+    Supports dynamic sub-trajectory sampling ("full_every") to improve robustness
+    on longer time horizons.
+    """
 
     @eqx.filter_value_and_grad
     def loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols):
+        """
+        Calculates the gradients for a single batch.
+        This wrapper handles the vmap over the batch dimension and computes the
+        mean loss across all trajectories.
+
+        Args:
+            model (LatentODE): The Equinox model to differentiate.
+            ts_i, ys_i: Time and Data for LOSS evaluation (reconstruction).
+            latent_spread: Batch-wise standard deviation for the path penalty.
+            ys_i_, ts_i_: Data and Time for ENCODING (context).
+            eval_cols (list, optional): Indices of columns to compute loss on.
+
+        Returns:
+            float: The mean loss value for the batch.
+        """
         batch_size, _ = ts_i.shape
         key_i = jr.split(key_i, batch_size)
         latent_spread = jnp.repeat(latent_spread, batch_size).reshape(
@@ -114,6 +155,11 @@ def main(
 
     @eqx.filter_jit
     def make_step(model, opt_state, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols):
+        """
+        Performs a single optimization step.
+        Returns:
+            tuple: (loss_value, updated_model, updated_opt_state, new_key)
+        """
         value, grads = loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols)
         key_i = jr.split(key_i, 1)[0]
         updates, opt_state = optim.update(grads, opt_state)
