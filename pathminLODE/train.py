@@ -2,28 +2,21 @@
 #       training script for a        #
 # variety of regularized latent ODEs #
 # ---------------------------------- #
-
 import os
 import time
 import numpy as np
-import jax.numpy as jnp
-from jax import grad, jit, vmap
-from jax import random
-from jax.scipy.special import logsumexp
-import random as rd
-
-# import lode modules
-import diffrax
-import equinox as eqx
 import jax
 import jax.nn as jnn
-import jax.numpy as jnp
 import jax.random as jr
+import jax.numpy as jnp
+from jax import grad, jit, vmap
+from jax.scipy.special import logsumexp
+import random as rd
+import diffrax
+import equinox as eqx
 import optax
-
 # import the lode
 from lode import LatentODE
-
 # add command line arguments
 import argparse
 
@@ -280,7 +273,6 @@ if __name__ == "__main__":
     # optionally move to float64 precision
     if args.precision64:
         from jax import config
-
         config.update("jax_enable_x64", True)
 
     main(
