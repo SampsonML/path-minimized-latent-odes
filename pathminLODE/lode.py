@@ -87,7 +87,8 @@ class LatentODE(eqx.Module):
         )
         self.func = Func(scale, mlp)
         self.rnn_cell = eqx.nn.GRUCell(input_size + 1, hidden_size, key=gkey)
-        self.hidden_to_latent = eqx.nn.Linear(hidden_size, 2 * latent_size, key=hlkey)
+        #self.hidden_to_latent = eqx.nn.Linear(hidden_size, 2 * latent_size, key=hlkey)
+        self.hidden_to_latent = eqx.nn.Linear(hidden_size, latent_size, key=hlkey)
         self.latent_to_hidden = eqx.nn.MLP(
             latent_size, hidden_size, width_size=width_size, depth=depth, key=lhkey
         )
@@ -106,9 +107,10 @@ class LatentODE(eqx.Module):
         hidden = jnp.zeros((self.hidden_size,))
         for data_i in reversed(data):
             hidden = self.rnn_cell(data_i, hidden)
-        context = self.hidden_to_latent(hidden)
-        latent, std = context[: self.latent_size], context[self.latent_size :]
-        return latent, std
+        latent = self.hidden_to_latent(hidden)
+        #latent, std = context[: self.latent_size], context[self.latent_size :]
+        #return latent, std
+        return latent
 
     # Decoder
     def _sample(self, ts, latent):
@@ -189,7 +191,8 @@ class LatentODE(eqx.Module):
 
     # training routine with suite of 3 loss functions
     def train(self, ts, ys, latent_spread, ts_, ys_, *, key):
-        latent, std = self._latent(ts_, ys_, key)
+        #latent, std = self._latent(ts_, ys_, key)
+        latent = self._latent(ts_, ts_, key)
         pred_ys = self._sample(ts, latent)
         int_fac = 1
         ts_interp = jnp.linspace(ts[0], ts[-1], len(ts) * int_fac)
