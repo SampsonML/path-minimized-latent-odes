@@ -150,7 +150,6 @@ class LatentODE(eqx.Module):
         return jax.vmap(self.hidden_to_data)(sol.ys)
 
     # New loss function, no variational loss
-    #@staticmethod
     def _distanceloss(self, ys, pred_ys, pred_latent, std):
         # MSE reconstruction loss
         reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
@@ -170,7 +169,6 @@ class LatentODE(eqx.Module):
         return reconstruction_loss + distance_loss
 
     # New loss function - parse in classification loss
-    #@staticmethod
     def _weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread):
         """
         This loss function aims to predict the weight values with the information
@@ -214,11 +212,11 @@ class LatentODE(eqx.Module):
         pred_latent = self._sampleLatent(ts_interp, latent)
         # our new autoencoder (not VAE) LatentODE-RNN with no variational loss
         if self.lossType == "distance":
-            return self._distanceloss(self, ys, pred_ys, pred_latent, latent_spread)
+            return self._distanceloss(ys, pred_ys, pred_latent, latent_spread)
         # new autoencoder with equal weighted dimensions
         elif self.lossType == "weighted":
             return self._weightedloss(
-                self, ys, pred_ys, pred_latent, std, latent_spread
+                ys, pred_ys, pred_latent, std, latent_spread
             )
         else:
             raise ValueError("lossType must be one of 'distance' or 'weighted'")
