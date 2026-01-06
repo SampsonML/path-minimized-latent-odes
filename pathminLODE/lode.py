@@ -138,9 +138,7 @@ class LatentODE(eqx.Module):
         reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
         # Mahalanobis distance between latents \sqrt{(x - y)^T \Sigma^{-1} (x - y)}
         diff = jnp.diff(pred_latent, axis=0)
-        std_latent = self.hidden_to_latent(
-            self.latent_to_hidden(std)
-        )  # get the latent space std
+        std_latent = self.hidden_to_latent(std)
         Cov = jnp.eye(diff.shape[1]) * std_latent  # latent_state
         Cov = jnp.linalg.inv(Cov)
         d_latent = jnp.sqrt(jnp.abs(jnp.sum(jnp.dot(diff, Cov) @ diff.T, axis=1)))
@@ -162,9 +160,7 @@ class LatentODE(eqx.Module):
         """
         # Mahalanobis distance between latents \sqrt{(x - y)^T \Sigma^{-1} (x - y)}
         diff = jnp.diff(pred_latent, axis=0)
-        std_latent = self.hidden_to_latent(
-            self.latent_to_hidden(std)
-        )  # get the latent space std
+        std_latent = self.hidden_to_latent(std)
         Cov = jnp.eye(diff.shape[1]) * std_latent  # latent_state
         Cov = jnp.linalg.inv(Cov)
         d_latent = jnp.sqrt(jnp.abs(jnp.sum(jnp.dot(diff, Cov) @ diff.T, axis=1)))
