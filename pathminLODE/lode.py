@@ -132,10 +132,10 @@ class LatentODE(eqx.Module):
         y0 = self.latent_to_hidden(latent)
         solver = (
             diffrax.Tsit5()
-        )  # see: https://docs.kidger.site/diffrax/api/solvers/ode_solvers/
+        )  
         adjoint = (
             diffrax.RecursiveCheckpointAdjoint()
-        )  # see: https://docs.kidger.site/diffrax/api/adjoints/
+        )  
         sol = diffrax.diffeqsolve(
             diffrax.ODETerm(self.func),
             solver,
