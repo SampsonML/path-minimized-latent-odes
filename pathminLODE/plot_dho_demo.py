@@ -38,8 +38,8 @@ ts = np.load("data/time.npy")
 y = jnp.array(ys[1992, :, :])
 t = jnp.array(ts[1992, :])
 
-# now create the latent encoding
-z0, _ = lode_model._latent(t, y, sample_key)
+# now create the latent encoding (for demonstrations we will call the pseudo-private class directly)
+z0 = lode_model._latent(t, y, sample_key)
 # now integrate and decode the trajectory
 t_eval = jnp.linspace(0, 15, 200)
 y_t = lode_model._sample(t_eval, z0)
