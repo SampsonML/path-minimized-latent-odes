@@ -7,38 +7,22 @@
 # https://arxiv.org/abs/1907.03907, with jax/diffrax #
 # implementation initially from Patrick Kidger       #
 # -------------------------------------------------- #
-# import mlp modules
 import os
 import time
 import numpy as np
-import jax.numpy as jnp
-from jax import grad, jit, vmap
-from jax import random
-from jax.scipy.special import logsumexp
-import random as rd
-
-# import lode modules
-import diffrax
-import equinox as eqx
 import jax
 import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jr
-
-# from numpy.lib.shape_base import row_stack
+import jax.numpy as jnp
+from jax import grad, jit, vmap
+from jax.scipy.special import logsumexp
+import random as rd
+import diffrax
+import equinox as eqx
 import optax
 from jax import config
-
 config.update("jax_enable_x64", True)
-
-
-def negative_relu_loss(x):
-    """
-    Penalizes negative values in x.
-    Equivalent to relu(-x), i.e., max(0, -x).
-    """
-    return jnp.mean(jnp.maximum(0.0, -x))
-
 
 # ---------------------------------------------- #
 #         the ODE for the LatentODE-RNN          #
