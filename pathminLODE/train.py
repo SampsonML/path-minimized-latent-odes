@@ -191,8 +191,7 @@ def main(
             batch_size_i, _ = ts_i.shape
             spread_key = jr.split(train_key, batch_size_i)
             (
-                latents,
-                _,
+                latents
             ) = jax.vmap(
                 lode_model._latent
             )(ts_i, ys_i, spread_key)
