@@ -3,7 +3,7 @@ name = "path-minimized-lode"
 version = "0.1.0"
 description = "Path-Minimizing Latent ODEs for Improved Extrapolation and Inference"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = "==3.12.*"
 license = { text = "MIT" }
 authors = [
     { name = "Matt L. Sampson", email = "matt.sampson@princeton.edu" }
