@@ -219,7 +219,7 @@ class LatentODE(eqx.Module):
         return reconstruction_loss + distance_loss
 
     # New loss function - parse in classification loss
-    def _weightedloss(self, ys, pred_ys, pred_latent, std, latent_spread):
+    def _weightedloss(self, ys, pred_ys, pred_latent, std):
         """
         Similar to _distanceloss() but an added weighting to the reconstruction loss.
         Same args and returns as _distanceloss()
@@ -238,8 +238,7 @@ class LatentODE(eqx.Module):
         d_latent = jnp.sum(d_latent)
         alpha = self.alpha  # weighting parameter for distance penalty
         # penalty for shinking latent space
-        latent_std = jnp.mean(latent_spread)
-        magnitude = 1 / latent_std
+        magnitude = 1 / jnp.linalg.norm(std_latent)
         distance_loss = d_latent * magnitude * alpha
 
         # perform inverse variance weighting for columns in ys
@@ -279,7 +278,7 @@ class LatentODE(eqx.Module):
             return self._distanceloss(ys, pred_ys, pred_latent, latent_spread)
         # new autoencoder with equal weighted dimensions
         elif self.lossType == "weighted":
-            return self._weightedloss(ys, pred_ys, pred_latent, std, latent_spread)
+            return self._weightedloss(ys, pred_ys, pred_latent, latent_spread)
         else:
             raise ValueError("lossType must be one of 'distance' or 'weighted'")
 
