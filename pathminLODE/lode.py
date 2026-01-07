@@ -207,7 +207,7 @@ class LatentODE(eqx.Module):
         reconstruction_loss = 0.5 * jnp.sum((ys - pred_ys) ** 2)
         # Mahalanobis distance between latents \sqrt{(x - y)^T \Sigma^{-1} (x - y)}
         diff = jnp.diff(pred_latent, axis=0)
-        std_latent = self.latent_to_hidden(std) # transform latent std to hidden (trajectory space) std
+        std_latent = self.hidden_to_latent(self.latent_to_hidden(std))
         Cov = jnp.eye(diff.shape[1]) * std_latent  # latent_state
         Cov = jnp.linalg.inv(Cov)
         d_latent = jnp.sqrt(jnp.abs(jnp.sum(jnp.dot(diff, Cov) @ diff.T, axis=1)))
@@ -231,7 +231,7 @@ class LatentODE(eqx.Module):
         """
         # Mahalanobis distance between latents \sqrt{(x - y)^T \Sigma^{-1} (x - y)}
         diff = jnp.diff(pred_latent, axis=0)
-        std_latent = self.latent_to_hidded(std) 
+        std_latent = self.hidden_to_latent(self.latent_to_hidden(std))
         Cov = jnp.eye(diff.shape[1]) * std_latent  # latent_state
         Cov = jnp.linalg.inv(Cov)
         d_latent = jnp.sqrt(jnp.abs(jnp.sum(jnp.dot(diff, Cov) @ diff.T, axis=1)))
@@ -311,7 +311,7 @@ class LatentODE(eqx.Module):
             stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5),
             saveat=diffrax.SaveAt(ts=ts),
         )
-        return sol.ys
+        return jax.vmap(self.hidden_to_latent)(sol.ys)
 
     # holdover from VAE encoder, you may still sample but
     # as not a VAE sampling from Gaussian is not advised
