@@ -15,15 +15,21 @@ import random as rd
 import diffrax
 import equinox as eqx
 import optax
+
 # import the lode
 from lode import LatentODE
+
 # add command line arguments
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dims", type=int, default=1, help="size of the data")
-parser.add_argument("--out_dims", type=int, default=None, help="size of the output data")
-parser.add_argument("--eval_cols", nargs="+" ,type=int, default=None, help="which columns to evaluate")
+parser.add_argument(
+    "--out_dims", type=int, default=None, help="size of the output data"
+)
+parser.add_argument(
+    "--eval_cols", nargs="+", type=int, default=None, help="which columns to evaluate"
+)
 parser.add_argument("--hidden", type=int, default=20, help="size of the hidden layers")
 parser.add_argument("--latent", type=int, default=20, help="size of the latent space")
 parser.add_argument("--width", type=int, default=20, help="width of the neural ODE")
@@ -96,8 +102,8 @@ def dataloader(arrays, batch_size, *, key):
 
 def main(
     input_size=1,  # dimensions of the data
-    output_size=1, # output dimensions 
-    eval_cols=None, # which columns to evaluate
+    output_size=1,  # output dimensions
+    eval_cols=None,  # which columns to evaluate
     hidden_size=10,  # size of the hidden layers
     latent_size=10,  # size of the latent space
     width_size=10,  # width of the MLP
@@ -125,7 +131,9 @@ def main(
     """
 
     @eqx.filter_value_and_grad
-    def loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols):
+    def loss(
+        model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols
+    ):
         """
         Calculates the gradients for a single batch.
         This wrapper handles the vmap over the batch dimension and computes the
@@ -146,21 +154,33 @@ def main(
         latent_spread = jnp.repeat(latent_spread, batch_size).reshape(
             batch_size, latent_spread.shape[-1]
         )
-        if eval_cols: # only evaluate at specified columns 
+        if eval_cols:  # only evaluate at specified columns
             ys_i = ys_i[:, :, eval_cols]
-        # note here that ts_i and ys_i are the evaluation points 
-        # ts_i_ and ys_i_ are the inputs to get encoded into a z_0 
+        # note here that ts_i and ys_i are the evaluation points
+        # ts_i_ and ys_i_ are the inputs to get encoded into a z_0
         loss = jax.vmap(model.train)(ts_i, ys_i, latent_spread, ts_i_, ys_i_, key=key_i)
         return jnp.mean(loss)
 
     @eqx.filter_jit
-    def make_step(model, opt_state, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols):
+    def make_step(
+        model,
+        opt_state,
+        ts_i,
+        ys_i,
+        key_i,
+        latent_spread,
+        ys_i_,
+        ts_i_,
+        eval_cols=eval_cols,
+    ):
         """
         Performs a single optimization step.
         Returns:
             tuple: (loss_value, updated_model, updated_opt_state, new_key)
         """
-        value, grads = loss(model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols)
+        value, grads = loss(
+            model, ts_i, ys_i, key_i, latent_spread, ys_i_, ts_i_, eval_cols=eval_cols
+        )
         key_i = jr.split(key_i, 1)[0]
         updates, opt_state = optim.update(grads, opt_state)
         model = eqx.apply_updates(model, updates)
@@ -236,11 +256,7 @@ def main(
             # get the standard deviation to ensure good spread
             batch_size_i, _ = ts_i.shape
             spread_key = jr.split(train_key, batch_size_i)
-            (
-                latents
-            ) = jax.vmap(
-                lode_model._latent
-            )(ts_i, ys_i, spread_key)
+            (latents) = jax.vmap(lode_model._latent)(ts_i, ys_i, spread_key)
             latent_spread = jnp.std(latents, axis=0)
 
             value, lode_model, opt_state, train_key = make_step(
@@ -252,7 +268,7 @@ def main(
                 latent_spread,
                 ys_i_,
                 ts_i_,
-                eval_cols=eval_cols
+                eval_cols=eval_cols,
             )
             end = time.time()
             print(
@@ -295,7 +311,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     input_size = args.dims
     output_size = args.out_dims
-    if output_size is None: 
+    if output_size is None:
         output_size = input_size
     eval_cols = args.eval_cols
     hidden_size = args.hidden
@@ -318,6 +334,7 @@ if __name__ == "__main__":
     # optionally move to float64 precision
     if args.precision64:
         from jax import config
+
         config.update("jax_enable_x64", True)
 
     main(

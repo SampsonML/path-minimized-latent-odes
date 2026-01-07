@@ -11,7 +11,7 @@ import os
 def get_data(dataset_size, *, key):
     """
     Generates synthetic training data for a Damped Harmonic Oscillator (DHO).
-    The time steps are irregularly sampled to test the model's ability to 
+    The time steps are irregularly sampled to test the model's ability to
     handle continuous-time dynamics.
 
     Args:
@@ -31,7 +31,7 @@ def get_data(dataset_size, *, key):
     ts = jnp.sort(ts)
     dt0 = 0.1
 
-    def func(t, y, args): # explicitly define the ODE system
+    def func(t, y, args):  # explicitly define the ODE system
         return jnp.array([[-0.1, 1.3], [-1, -0.1]]) @ y
 
     def solve(ts, y0):

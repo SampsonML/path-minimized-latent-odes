@@ -22,7 +22,9 @@ import diffrax
 import equinox as eqx
 import optax
 from jax import config
+
 config.update("jax_enable_x64", True)
+
 
 # ---------------------------------------------- #
 #         the ODE for the LatentODE-RNN          #
@@ -38,6 +40,7 @@ class Func(eqx.Module):
         scale (jnp.ndarray): A learnable scalar gain factor.
         mlp (eqx.nn.MLP): The neural network approximating the dynamics.
     """
+
     scale: jnp.ndarray
     mlp: eqx.nn.MLP
 
@@ -63,9 +66,10 @@ class LatentODE(eqx.Module):
 
     Key Mechanisms:
         - Deterministic Encoding: No sampling of z_0 (simplifies inference).
-        - Geometric Regularization: Penalizes the Mahalanobis distance of the latent 
+        - Geometric Regularization: Penalizes the Mahalanobis distance of the latent
           path to enforce smoothness and prevent mode collapse.
     """
+
     func: Func
     rnn_cell: eqx.nn.GRUCell
 
@@ -73,8 +77,8 @@ class LatentODE(eqx.Module):
     latent_to_hidden: eqx.nn.MLP
     hidden_to_data: eqx.nn.Linear
 
-    input_size: int 
-    output_size: int 
+    input_size: int
+    output_size: int
     hidden_size: int
     latent_size: int
     alpha: int
@@ -120,9 +124,9 @@ class LatentODE(eqx.Module):
             latent_size, hidden_size, width_size=width_size, depth=depth, key=lhkey
         )
         self.hidden_to_data = eqx.nn.Linear(hidden_size, output_size, key=hdkey)
-        self.dt = dt 
-        self.input_size = input_size 
-        self.output_size = output_size 
+        self.dt = dt
+        self.input_size = input_size
+        self.output_size = output_size
         self.hidden_size = hidden_size
         self.latent_size = latent_size
         self.alpha = alpha
@@ -164,12 +168,8 @@ class LatentODE(eqx.Module):
         """
         dt0 = self.dt
         y0 = self.latent_to_hidden(latent)
-        solver = (
-            diffrax.Tsit5()
-        )  
-        adjoint = (
-            diffrax.RecursiveCheckpointAdjoint()
-        )  
+        solver = diffrax.Tsit5()
+        adjoint = diffrax.RecursiveCheckpointAdjoint()
         sol = diffrax.diffeqsolve(
             diffrax.ODETerm(self.func),
             solver,
@@ -196,11 +196,11 @@ class LatentODE(eqx.Module):
             ys (jnp.ndarray): The ground truth observations. Shape: (Time, Output_Size).
             pred_ys (jnp.ndarray): The predicted observations from the decoder. Shape: (Time, Output_Size).
             pred_latent (jnp.ndarray): The predicted trajectory in latent space z(t). Shape: (Time, Latent_Size).
-            std (jnp.ndarray): The empirical standard deviation of the latent codes across the batch. 
+            std (jnp.ndarray): The empirical standard deviation of the latent codes across the batch.
                                Used to define the diagonal covariance metric for the Mahalanobis distance.
 
         Returns:
-            jnp.ndarray: A scalar loss value summing the MSE reconstruction error and the 
+            jnp.ndarray: A scalar loss value summing the MSE reconstruction error and the
                          weighted path-length penalty.
         """
         # MSE reconstruction loss
@@ -271,7 +271,7 @@ class LatentODE(eqx.Module):
         """
         latent = self._latent(ts_, ys_, key)
         pred_ys = self._sample(ts, latent)
-        int_fac = 1 # can interpolate more points that in observations
+        int_fac = 1  # can interpolate more points that in observations
         ts_interp = jnp.linspace(ts[0], ts[-1], len(ts) * int_fac)
         pred_latent = self._sampleLatent(ts_interp, latent)
         # our new autoencoder (not VAE) LatentODE-RNN with no variational loss
@@ -279,16 +279,14 @@ class LatentODE(eqx.Module):
             return self._distanceloss(ys, pred_ys, pred_latent, latent_spread)
         # new autoencoder with equal weighted dimensions
         elif self.lossType == "weighted":
-            return self._weightedloss(
-                ys, pred_ys, pred_latent, std, latent_spread
-            )
+            return self._weightedloss(ys, pred_ys, pred_latent, std, latent_spread)
         else:
             raise ValueError("lossType must be one of 'distance' or 'weighted'")
 
     def _sampleLatent(self, ts, latent):
         """
         Solves the ODE.
-        This is used during training to calculate the path length for the 
+        This is used during training to calculate the path length for the
         geometric penalty. Unlike _sample() which maps to data space.
 
         Args:
@@ -296,7 +294,7 @@ class LatentODE(eqx.Module):
             latent (jnp.ndarray): The initial latent state z_0.
 
         Returns:
-            jnp.ndarray: The evolving latent state trajectory z(t). 
+            jnp.ndarray: The evolving latent state trajectory z(t).
                          Shape: (Time, Latent_Size).
         """
         dt0 = self.dt
@@ -318,8 +316,8 @@ class LatentODE(eqx.Module):
     def sampleLatent(self, ts, *, key):
         """
         Generates a random latent trajectory z(t) from the learned dynamics.
-        This is useful for visualizing the "mental model" of the ODE. It samples 
-        a random initial condition z_0 ~ N(0, I) and evolves it forward, returning 
+        This is useful for visualizing the "mental model" of the ODE. It samples
+        a random initial condition z_0 ~ N(0, I) and evolves it forward, returning
         the trajectory in the latent space without projecting it to the data space.
         This is not reccomended with path-minimised LODEs
 
@@ -333,7 +331,6 @@ class LatentODE(eqx.Module):
         latent = jr.normal(key, (self.latent_size,))
         return self._sampleLatent(ts, latent)
 
-
     # Run just the decoder during inference.
     def sample(self, ts, *, key):
         """
@@ -346,7 +343,7 @@ class LatentODE(eqx.Module):
             key (jax.random.PRNGKey): Random key for sampling z_0.
 
         Returns:
-            jnp.ndarray: A generated trajectory in the data space. 
+            jnp.ndarray: A generated trajectory in the data space.
                          Shape: (Time, Output_Size).
         """
         latent = jr.normal(key, (self.latent_size,))

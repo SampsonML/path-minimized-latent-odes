@@ -16,7 +16,7 @@ sample_key, model_key = random.split(random.PRNGKey(0), 2)
 # built the trained lode (with parameters hard-coded from the demo in READEME)
 lode_model = LatentODE(
     input_size=2,
-    output_size=2, 
+    output_size=2,
     eval_cols=None,
     hidden_size=10,
     latent_size=10,
