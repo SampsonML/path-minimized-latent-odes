@@ -212,7 +212,7 @@ class LatentODE(eqx.Module):
         d_latent = jnp.sqrt(jnp.abs(jnp.sum(jnp.dot(diff, Cov) @ diff.T, axis=1)))
         d_latent = jnp.sum(d_latent)
         alpha = self.alpha  # weighting parameter for distance penalty
-        # penalty for shinking latent space
+        # penalty for shrinking latent space
         magnitude = 1 / jnp.linalg.norm(std_latent)
         distance_loss = alpha * d_latent * magnitude
         return reconstruction_loss + distance_loss
@@ -317,7 +317,7 @@ class LatentODE(eqx.Module):
         This is useful for visualizing the "mental model" of the ODE. It samples
         a random initial condition z_0 ~ N(0, I) and evolves it forward, returning
         the trajectory in the latent space without projecting it to the data space.
-        This is not reccomended with path-minimised LODEs
+        This is not recommended with path-minimised LODEs
 
         Args:
             ts (jnp.ndarray): The time steps to evaluate.
@@ -334,7 +334,7 @@ class LatentODE(eqx.Module):
         """
         Generates a new random trajectory from the learned latent dynamics.
         Samples a random initial condition z_0 ~ N(0, I) and solves the ODE
-        to produce a synthetic observation. This is not reccomended with path-minimised LODEs
+        to produce a synthetic observation. This is not recommended with path-minimised LODEs
 
         Args:
             ts (jnp.ndarray): The time steps to generate data for.
