@@ -1,7 +1,7 @@
 # Path-Minimized Latent ODEs
 [![arXiv](https://img.shields.io/badge/arXiv-2410.08923-<COLOR>.svg)](https://arxiv.org/abs/2410.08923)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](#license)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Lint](https://github.com/SampsonML/path-minimized-latent-odes/actions/workflows/lint.yml/badge.svg)](https://github.com/SampsonML/path-minimized-latent-odes/actions/workflows/lint.yml)
 
 This repository provides an implementation of **Path-Minimized Latent ODEs**, a modification to latent neural ODE models that improves extrapolation, interpolation, and inference of dynamical systems.  
