@@ -14,7 +14,6 @@ import jax
 import jax.nn as jnn
 import jax.numpy as jnp
 import jax.random as jr
-import jax.numpy as jnp
 from jax import grad, jit, vmap
 from jax.scipy.special import logsumexp
 import random as rd
