@@ -24,3 +24,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["pathminLODE"]
+
+[dependency-groups]
+dev = [
+    "black>=25.12.0",
+]
