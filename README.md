@@ -1,6 +1,8 @@
 # Path-Minimized Latent ODEs
 [![arXiv](https://img.shields.io/badge/arXiv-2410.08923-<COLOR>.svg)](https://arxiv.org/abs/2410.08923)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](#license)
+[![Tests](https://github.com/SampsonML/path-minimized-latent-odes/actions/workflows/ci.yml/badge.svg)](https://github.com/SampsonML/path-minimized-latent-odes/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/SampsonML/path-minimized-latent-odes/graph/badge.svg?token=8df78eed-cd88-429c-97a4-99a75b5df26e)](https://codecov.io/gh/SampsonML/path-minimized-latent-odes)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Lint](https://github.com/SampsonML/path-minimized-latent-odes/actions/workflows/lint.yml/badge.svg)](https://github.com/SampsonML/path-minimized-latent-odes/actions/workflows/lint.yml)
 
