@@ -232,7 +232,7 @@ def main(
 
                 # choose a random integer between 1 and 100
                 key_e = jr.PRNGKey(step)  # always same runs will be long
-                key_start, key_end, key_points = jr.split(key_e, model_size)
+                key_start, key_end, key_points = jr.split(key_e, 3)
                 n_path = jr.randint(
                     key_start, shape=(), minval=min_path, maxval=max_path
                 )
@@ -278,7 +278,7 @@ def main(
 
         # load the model instead here
         else:
-            modelName = "saved_models/" + MODEL_NAME
+            modelName = "saved_models/" + save_name
             lode_model = eqx.tree_deserialise_leaves(modelName, lode_model)
 
         # save the model

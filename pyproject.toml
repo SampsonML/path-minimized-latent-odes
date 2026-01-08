@@ -28,4 +28,13 @@ packages = ["pathminLODE"]
 [dependency-groups]
 dev = [
     "black>=25.12.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning:equinox.*"
 ]
