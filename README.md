@@ -1,9 +1,9 @@
 # Path-Minimized Latent ODEs
 [![arXiv](https://img.shields.io/badge/arXiv-2410.08923-B31B1B.svg?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2410.08923)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](#license)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge&logo=python&logoColor=white)](https://github.com/psf/black)
 [![Tests](https://github.com/SampsonML/PathMinimizedLatentODEs/actions/workflows/ci.yml/badge.svg?style=for-the-badge)](https://github.com/SampsonML/PathMinimizedLatentODEs/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/SampsonML/path-minimized-latent-odes/graph/badge.svg?token=8df78eed-cd88-429c-97a4-99a75b5df26e&style=for-the-badge)](https://codecov.io/gh/SampsonML/path-minimized-latent-odes)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge&logo=python&logoColor=white)](https://github.com/psf/black)
 [![Lint](https://github.com/SampsonML/PathMinimizedLatentODEs/actions/workflows/lint.yml/badge.svg?style=for-the-badge)](https://github.com/SampsonML/PathMinimizedLatentODEs/actions/workflows/lint.yml)
 
 This repository provides an implementation of **Path-Minimized Latent ODEs**, a modification to latent neural ODE models that improves extrapolation, interpolation, and inference of dynamical systems.  
