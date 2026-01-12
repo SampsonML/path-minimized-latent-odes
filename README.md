@@ -5,8 +5,6 @@
 [![Lint](https://img.shields.io/github/actions/workflow/status/SampsonML/PathMinimizedLatentODEs/lint.yml?branch=main&style=for-the-badge&label=Lint)](https://github.com/SampsonML/PathMinimizedLatentODEs/actions/workflows/lint.yml)
 [![codecov](https://img.shields.io/codecov/c/github/SampsonML/path-minimized-latent-odes?style=for-the-badge&token=8df78eed-cd88-429c-97a4-99a75b5df26e&logo=codecov)](https://codecov.io/gh/SampsonML/path-minimized-latent-odes)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge&logo=python&logoColor=white)](https://github.com/psf/black)
-
-## temp
 [![codecov](https://codecov.io/gh/SampsonML/path-minimized-latent-odes/graph/badge.svg?token=8df78eed-cd88-429c-97a4-99a75b5df26e&style=for-the-badge)](https://codecov.io/gh/SampsonML/path-minimized-latent-odes)
 
 
